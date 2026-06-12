@@ -5500,7 +5500,7 @@ function anzParseSC(text) {
       const user = parts[0].trim();
       const fecha = parts[1].trim();
       const tipo = parts[2].trim();
-      const tokens = parseInt(parts[3]) || 0;
+      const tokens = parseInt(parts[3].replace(/[\s\u00a0,]/g, '')) || 0;
       if (tokens > 0) entries.push({ user, fecha, tipo, tokens });
     } else {
       // Try space-based parsing (tab-separated but browser might convert)
@@ -5521,7 +5521,7 @@ function anzParseSC(text) {
       const user = ls[i];
       const fecha = ls[i+1];
       const tipo = ls[i+2];
-      const tokens = parseInt(ls[i+3]) || 0;
+      const tokens = parseInt((ls[i+3]||'').replace(/[\s\u00a0,]/g, '')) || 0;
       if (tokens > 0) entries.push({ user, fecha, tipo, tokens });
       i += 4;
     }
@@ -5536,8 +5536,15 @@ function anzParseSC(text) {
   const tippers = {};
   let ticketTokens = 0;
   let ticketCount = 0;
-  let privadoTokens = 0;
-  let privadoCount = 0;
+
+  // Private types with their tk/min rate
+  // "Propina privada" = tip sent privately, NOT time-based → excluded from duration
+  const privTypes = {
+    'privado exclusivo':  { tokens: 0, count: 0, rate: 60 },
+    'privado regular':    { tokens: 0, count: 0, rate: 32 },
+    'show privado':       { tokens: 0, count: 0, rate: 30 },
+    'privado':            { tokens: 0, count: 0, rate: 32 }, // fallback
+  };
 
   for (const e of entries) {
     const t = e.tipo.toLowerCase();
@@ -5546,15 +5553,42 @@ function anzParseSC(text) {
     if (t.includes('ticket')) {
       ticketTokens += e.tokens;
       ticketCount++;
-    } else if (t.includes('privad')) {
-      privadoTokens += e.tokens;
-      privadoCount++;
+    } else if (t === 'privado exclusivo' || t.includes('exclusivo')) {
+      privTypes['privado exclusivo'].tokens += e.tokens;
+      privTypes['privado exclusivo'].count++;
+    } else if (t === 'show privado' || t === 'privado regular' || (t.includes('privado') && !t.includes('propina'))) {
+      // Only count as time-based if it's NOT "propina privada"
+      const key = t.includes('show') ? 'show privado' : 'privado regular';
+      privTypes[key].tokens += e.tokens;
+      privTypes[key].count++;
     }
+    // "propina privada" → NOT time-based, just a tip, skip from privTypes
 
     if (e.user && e.user !== 'Anónimo' && e.user !== 'Cuenta eliminada') {
       tippers[e.user] = (tippers[e.user] || 0) + e.tokens;
     }
   }
+
+  // Calculate real minutes per type and total
+  const privBreakdown = [];
+  let privadoTokens = 0;
+  let privadoMinTotal = 0;
+
+  for (const [key, pv] of Object.entries(privTypes)) {
+    if (pv.count === 0) continue;
+    // Each SC entry = 1 minute at that rate
+    const mins = pv.count; // 1 entry = 1 min (SC bills per minute)
+    privadoTokens += pv.tokens;
+    privadoMinTotal += mins;
+    privBreakdown.push({
+      tipo: key.charAt(0).toUpperCase() + key.slice(1),
+      tokens: pv.tokens,
+      count: pv.count,
+      mins,
+      rate: pv.rate
+    });
+  }
+  const privadoCount = privadoMinTotal; // total minutes
 
   const topTippers = Object.entries(tippers)
     .sort((a,b) => b[1]-a[1])
@@ -5567,7 +5601,8 @@ function anzParseSC(text) {
     ticketTokens,
     ticketCount,
     privadoTokens,
-    privadoCount,
+    privadoCount,   // = total minutes
+    privBreakdown,  // per-type breakdown
     totalEntries: entries.length
   };
 }
@@ -5655,15 +5690,14 @@ function anzRenderSC(r) {
   const kpis = document.getElementById('anz-sc-kpis');
   const secs = document.getElementById('anz-sc-sections');
 
-  const scPrivMin = r.privadoCount; // SC: each row = 1 transaction (not per-minute like CB)
-  // For SC, each private entry is typically 1 min at 30-60 tk/min
+  const scPrivMin = r.privadoCount; // = total real minutes
   const scPrivHoras = Math.floor(scPrivMin/60);
   const scPrivMins  = scPrivMin % 60;
 
   kpis.innerHTML = [
     kpiCard('Total tokens SC', r.totalTokens.toLocaleString('es') + ' tk', `${r.totalEntries} transacciones`, 'var(--sc)'),
     r.ticketTokens > 0 ? kpiCard('Ticket Shows', r.ticketTokens.toLocaleString('es') + ' tk', `${r.ticketCount} entradas vendidas`, 'var(--gold)') : '',
-    r.privadoTokens > 0 ? kpiCard('Privados SC', r.privadoTokens.toLocaleString('es') + ' tk', `${r.privadoCount} transacciones · ${scPrivHoras}h ${scPrivMins}min`, 'var(--sc)') : '',
+    r.privadoTokens > 0 ? kpiCard('Privados SC', r.privadoTokens.toLocaleString('es') + ' tk', `${scPrivMin} min · ${scPrivHoras}h ${scPrivMins}min`, 'var(--sc)') : '',
   ].join('');
 
   // Categories
@@ -5681,10 +5715,22 @@ function anzRenderSC(r) {
       <div class="anz-section-title">Detalle privados SC</div>
       <div class="anz-priv-block">
         <div class="anz-priv-item"><div class="anz-priv-label">Tokens privados</div><div class="anz-priv-val" style="color:var(--sc)">${r.privadoTokens.toLocaleString('es')} tk</div></div>
-        <div class="anz-priv-item"><div class="anz-priv-label">Transacciones</div><div class="anz-priv-val">${r.privadoCount}</div></div>
         <div class="anz-priv-item"><div class="anz-priv-label">Duración total</div><div class="anz-priv-val">${r.privadoCount} min</div></div>
         <div class="anz-priv-item"><div class="anz-priv-label">En formato hora</div><div class="anz-priv-val" style="color:var(--gold)">${Math.floor(r.privadoCount/60)}h ${r.privadoCount%60}min</div></div>
+        <div class="anz-priv-item"><div class="anz-priv-label">Nota</div><div class="anz-priv-val" style="font-size:10px;color:var(--text3)">Propinas privadas excluidas del tiempo</div></div>
       </div>
+      ${r.privBreakdown && r.privBreakdown.length > 1 ? `
+      <table class="anz-table" style="margin-top:10px;"><thead><tr>
+        <th>Tipo</th><th style="text-align:right">Tokens</th><th style="text-align:right">Mins</th><th style="text-align:right">Hora</th><th style="text-align:right">Tarifa</th>
+      </tr></thead><tbody>
+      ${r.privBreakdown.map(p => `<tr>
+        <td class="anz-user">${p.tipo}</td>
+        <td class="anz-num">${p.tokens.toLocaleString('es')} tk</td>
+        <td class="anz-num">${p.mins} min</td>
+        <td class="anz-num" style="color:var(--gold)">${Math.floor(p.mins/60)}h ${p.mins%60}min</td>
+        <td class="anz-num" style="color:var(--text3)">${p.rate} tk/min</td>
+      </tr>`).join('')}
+      </tbody></table>` : ''}
     </div>` : '';
 
   secs.innerHTML = `
