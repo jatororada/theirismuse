@@ -5648,10 +5648,15 @@ function anzRenderCB(r) {
   ].join('');
 
   // Categories table
+  const cbCatTotal = Object.values(r.cats).reduce((s,v) => s+v, 0) || 1;
   const catRows = Object.entries(r.cats)
     .sort((a,b)=>b[1]-a[1])
-    .map(([cat,tk]) => `<tr><td class="anz-user">${cat}</td><td class="anz-num">${tk.toLocaleString('es')} tk</td><td class="anz-num">${Math.round(tk/r.tokensGanados*100)}%</td></tr>`)
+    .map(([cat,tk]) => `<tr><td class="anz-user">${cat}</td><td class="anz-num">${tk.toLocaleString('es')} tk</td><td class="anz-num">${Math.round(tk/cbCatTotal*100)}%</td></tr>`)
     .join('');
+
+  // Detect private type from rate: 60 tk/min = exclusivo, 30 tk/min = regular
+  const cbPrivRate = r.privadoMinutos > 0 ? Math.round(r.privadoTokens / r.privadoMinutos) : 0;
+  const cbPrivTipo = cbPrivRate >= 55 ? 'Exclusivo — 60 tk/min' : cbPrivRate >= 28 ? 'Regular — 30 tk/min' : `~${cbPrivRate} tk/min`;
 
   // Private detail
   const privDetail = r.privadoMinutos > 0 ? `
@@ -5662,7 +5667,7 @@ function anzRenderCB(r) {
         <div class="anz-priv-item"><div class="anz-priv-label">Duración total</div><div class="anz-priv-val">${r.privadoMinutos} min</div></div>
         <div class="anz-priv-item"><div class="anz-priv-label">En formato hora</div><div class="anz-priv-val" style="color:var(--gold)">${Math.floor(r.privadoMinutos/60)}h ${r.privadoMinutos%60}min</div></div>
         <div class="anz-priv-item"><div class="anz-priv-label">Sesiones</div><div class="anz-priv-val">${r.privadoSesiones}</div></div>
-        <div class="anz-priv-item"><div class="anz-priv-label">Tipo (precio/min)</div><div class="anz-priv-val">Premium 60 tk/min</div></div>
+        <div class="anz-priv-item"><div class="anz-priv-label">Tipo detectado</div><div class="anz-priv-val" style="color:var(--gold2)">${cbPrivTipo}</div></div>
       </div>
     </div>` : '';
 
