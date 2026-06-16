@@ -4460,7 +4460,7 @@ function renderCal() {
 }
 
 // ── GOAL CHIPS RENDERER ──────────────────────────────────────────────
-function makeGoals(goals, materials, showTitle) {
+function makeGoals(goals, materials, showTitle, wd) {
   const block = document.createElement('div');
   block.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;';
 
@@ -4489,15 +4489,35 @@ function makeGoals(goals, materials, showTitle) {
     {bg:'rgba(196,137,74,.18)',  border:'rgba(196,137,74,.45)',  text:'#e8b870', label:'Final'},
   ];
 
-  // Standard prices CB and SC per goal position
-  const cbPrices = [77, 150, 222, 333, 555];
-  const scPrices = [80, 160, 240, 350, 600];
+  // Precios por tipo de show — coinciden con la tabla de "Goals por colores".
+  // wd: 0=Dom 1=Lun 2=Mar 3=Mié 4=Jue 5=Vie 6=Sáb
+  // Ligero (lun/mar/mié) · Intermedio (jue/vie) · Premium (sáb)
+  // 5 goals: G1 entrada, G2 escalada, G3 principal, G4 bonus, G5 = goal que ABRE el ticket show
+  // Para G5 hay DOS valores: el goal en tokens (para abrirlo) Y el precio de entrada por viewer.
+  let tier;
+  if (wd === 6) {
+    // Premium (sábado)
+    tier = { cb: [200, 500, 1000, 350, 800], ticketEntry: 100, label: 'Premium' };
+  } else if (wd === 4 || wd === 5) {
+    // Intermedio (jueves/viernes)
+    tier = { cb: [150, 350, 700, 300, 600], ticketEntry: 75, label: 'Intermedio' };
+  } else {
+    // Ligero (domingo/lunes/martes/miércoles)
+    tier = { cb: [100, 200, 450, 250, 400], ticketEntry: 50, label: 'Ligero' };
+  }
+  // SC suele ser ~5% más alto (audiencia paga similar); redondeo limpio
+  const scFromCb = (v) => Math.round(v * 1.05 / 10) * 10;
+  const cbPrices = tier.cb;
+  const scPrices = tier.cb.map((v) => scFromCb(v));
+  const cbTicketEntry = tier.ticketEntry;
+  const scTicketEntry = tier.ticketEntry; // entrada igual en ambas plataformas
 
   (goals||[]).forEach((goal, i) => {
     if (!goal) return;
     const col = colors[Math.min(i, colors.length-1)];
     const cbP = cbPrices[Math.min(i, cbPrices.length-1)];
     const scP = scPrices[Math.min(i, scPrices.length-1)];
+    const isTicket = (i === 4); // Goal 5 = goal que abre el ticket show
 
     // Wrapper row
     const row = document.createElement('div');
@@ -4557,9 +4577,19 @@ function makeGoals(goals, materials, showTitle) {
     // Price badges
     const prices = document.createElement('div');
     prices.style.cssText = 'display:flex;flex-direction:column;gap:3px;flex-shrink:0;';
-    prices.innerHTML =
-      '<div style="font-family:var(--mono);font-size:9px;background:rgba(100,180,220,.1);border:1px solid rgba(100,180,220,.25);color:#7ab0d0;padding:2px 7px;border-radius:4px;text-align:center;white-space:nowrap;">CB ' + cbP + ' tk</div>' +
-      '<div style="font-family:var(--mono);font-size:9px;background:rgba(233,105,57,.12);border:1px solid rgba(233,105,57,.3);color:#e86232;padding:2px 7px;border-radius:4px;text-align:center;white-space:nowrap;">SC ' + scP + ' tk</div>';
+    if (isTicket) {
+      // Goal 5: mostrar el GOAL (tokens para abrir) y la ENTRADA (precio por viewer)
+      prices.innerHTML =
+        '<div style="font-family:var(--mono);font-size:8px;color:var(--text3);text-align:right;margin-bottom:2px;white-space:nowrap;">goal abre ticket</div>' +
+        '<div style="font-family:var(--mono);font-size:9px;background:rgba(100,180,220,.1);border:1px solid rgba(100,180,220,.25);color:#7ab0d0;padding:2px 7px;border-radius:4px;text-align:center;white-space:nowrap;margin-bottom:3px;">CB ' + cbP + ' tk</div>' +
+        '<div style="font-family:var(--mono);font-size:9px;background:rgba(233,105,57,.12);border:1px solid rgba(233,105,57,.3);color:#e86232;padding:2px 7px;border-radius:4px;text-align:center;white-space:nowrap;margin-bottom:5px;">SC ' + scP + ' tk</div>' +
+        '<div style="font-family:var(--mono);font-size:8px;color:var(--gold);text-align:right;margin-bottom:2px;white-space:nowrap;">🎟 entrada/viewer</div>' +
+        '<div style="font-family:var(--mono);font-size:9px;background:rgba(200,146,26,.12);border:1px solid rgba(200,146,26,.35);color:var(--gold2);padding:2px 7px;border-radius:4px;text-align:center;white-space:nowrap;">' + cbTicketEntry + ' tk c/u</div>';
+    } else {
+      prices.innerHTML =
+        '<div style="font-family:var(--mono);font-size:9px;background:rgba(100,180,220,.1);border:1px solid rgba(100,180,220,.25);color:#7ab0d0;padding:2px 7px;border-radius:4px;text-align:center;white-space:nowrap;">CB ' + cbP + ' tk</div>' +
+        '<div style="font-family:var(--mono);font-size:9px;background:rgba(233,105,57,.12);border:1px solid rgba(233,105,57,.3);color:#e86232;padding:2px 7px;border-radius:4px;text-align:center;white-space:nowrap;">SC ' + scP + ' tk</div>';
+    }
     row.appendChild(prices);
 
     block.appendChild(row);
@@ -4763,7 +4793,7 @@ function openDetail(key, d) {
       const _restGoals = ['Subir contenido a OF — PPV del sábado pasado','DM grabación a miembros CB Fan Club','DM grabación ticket show a miembros SC Fan Club','Review KPIs — tokens, income/hour, followers','Plan shows and teasers for next week','Preparar materiales para el próximo show premium'];
       const fallbackGoals = data.type === 'rest' ? _restGoals : (data.goals && data.goals.length ? data.goals : _restGoals);
       const goalsToShow = (data.goals && data.goals.length) ? data.goals : fallbackGoals;
-      const goalsBlock = makeGoals(goalsToShow, data.prep || null, data.title || null);
+      const goalsBlock = makeGoals(goalsToShow, data.prep || null, data.title || null, date.getDay());
       goalsBlock.style.gridColumn = '1 / -1';
       dpGrid.appendChild(goalsBlock);
     }
@@ -4816,7 +4846,7 @@ function openDetail(key, d) {
     const schedItems = [gd.time, gd.platforms, gd.desc].filter(Boolean);
     dpGrid.appendChild(makeBlock('Horario & Plataformas', 'var(--blue)', schedItems));
     {
-      const gdGoalsBlock = makeGoals(gd.goals, gd.prep || null, gd.title || null);
+      const gdGoalsBlock = makeGoals(gd.goals, gd.prep || null, gd.title || null, date.getDay());
       gdGoalsBlock.style.gridColumn = '1 / -1';
       dpGrid.appendChild(gdGoalsBlock);
     }
