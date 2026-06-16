@@ -5130,10 +5130,26 @@ function loadStreamReport(key) {
 
 // ── SAVE WEEK REPORT ─────────────────────────────────────────────────
 function saveWeekReport() {
-  // Build partial data object for dashboard update
-  const _wdata = { sc_pago_tk: getVal('w_sc_pago_tk'), sc_stripscore: getVal('w_sc_stripscore'), sc_rating: getVal('w_sc_rating') };
+  // Map ALL weekly fields to the dashboard update format
+  const _wdata = {
+    cb_total_fans: getVal('w_cb_fans_end'),   // seguidores fin de semana
+    sc_total_fans: getVal('w_sc_fans_end'),
+    sc_30h:        getVal('w_sc_30h'),         // ingresos/hora prom
+    cb_fc_total:   getVal('w_cb_fc'),
+    sc_fc_total:   getVal('w_sc_fc'),
+    of_total:      getVal('w_of_total'),       // total OF (se setea directo abajo)
+    sc_pago_tk:    getVal('w_sc_pago_tk'),
+    sc_stripscore: getVal('w_sc_stripscore'),
+    sc_rating:     getVal('w_sc_rating')
+  };
   applyDashboardUpdate(_wdata);
-  updateAllDashboard(null, _wdata);
+  // OF total directo (el reporte semanal da el total, no incremento)
+  if (getVal('w_of_total')) {
+    const ofT = parseInt(getVal('w_of_total'));
+    const setOf = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+    setOf('dash_of_subs', ofT);
+    setOf('kpi_of_subs', ofT);
+  }
   const data = {
     desde: getVal('w_desde'), hasta: getVal('w_hasta'),
     streams: getVal('w_streams'), horas: getVal('w_horas'),
@@ -5161,6 +5177,30 @@ function saveWeekReport() {
   btn.textContent = '✓ Guardado'; btn.classList.add('saved');
   setTimeout(() => { btn.textContent = '💾 Guardar reporte semanal'; btn.classList.remove('saved'); }, 2500);
   renderWeekHistory();
+  setTimeout(() => clearWeekForm(), 800);
+}
+
+function clearWeekForm() {
+  const ids = [
+    'w_desde','w_hasta','w_streams','w_horas',
+    'w_cb_tk','w_cb_priv_tk','w_cb_priv_n','w_cb_priv_tipo','w_cb_priv_dur',
+    'w_cb_fans_start','w_cb_fans_end','w_cb_fc',
+    'w_sc_total','w_sc_30h','w_sc_priv_dur','w_sc_priv_tipo',
+    'w_sc_pago_tk','w_sc_pago_usd','w_sc_stripscore','w_sc_rating',
+    'w_sc_fans_start','w_sc_fans_end','w_sc_fc',
+    'w_of_new','w_of_total','w_of_ppv',
+    'w_best_show','w_best_day','w_ajustar','w_next_vie','w_next_sab'
+  ];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.tagName === 'SELECT') el.selectedIndex = 0;
+    else el.value = '';
+  });
+  // Clear radio buttons
+  ['w_sab','w_teaser_vie','w_teaser_sab'].forEach(name => {
+    document.querySelectorAll(`input[name="${name}"]`).forEach(r => r.checked = false);
+  });
 }
 
 function renderWeekHistory() {
@@ -5190,6 +5230,23 @@ function renderWeekHistory() {
 
 // ── SAVE MONTH REPORT ────────────────────────────────────────────────
 function saveMonthReport() {
+  // Map monthly fields to dashboard update format
+  const _mdata = {
+    cb_total_fans: getVal('m_cb_fans_end'),
+    sc_total_fans: getVal('m_sc_fans_end'),
+    sc_30h:        getVal('m_sc_30h'),
+    cb_fc_total:   getVal('m_cb_fc'),
+    sc_fc_total:   getVal('m_sc_fc'),
+    sc_rating:     getVal('m_sc_rating')
+  };
+  applyDashboardUpdate(_mdata);
+  // OF total directo (el reporte mensual da el total)
+  if (getVal('m_of_total')) {
+    const ofT = parseInt(getVal('m_of_total'));
+    const setOf = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+    setOf('dash_of_subs', ofT);
+    setOf('kpi_of_subs', ofT);
+  }
   const data = {
     mes: getVal('m_mes'), anio: getVal('m_anio'),
     streams: getVal('m_streams'), premium: getVal('m_premium'),
@@ -5212,6 +5269,29 @@ function saveMonthReport() {
   btn.textContent = '✓ Guardado'; btn.classList.add('saved');
   setTimeout(() => { btn.textContent = '💾 Guardar reporte mensual'; btn.classList.remove('saved'); }, 2500);
   renderMonthHistory();
+  setTimeout(() => clearMonthForm(), 800);
+}
+
+function clearMonthForm() {
+  const ids = [
+    'm_mes','m_anio','m_streams','m_premium',
+    'm_cb_tk','m_cb_priv_tk','m_cb_fans_start','m_cb_fans_end','m_cb_fc',
+    'm_sc_total','m_sc_30h','m_sc_pagos_n','m_sc_pagos_usd',
+    'm_sc_fans_start','m_sc_fans_end','m_sc_fc','m_sc_rating',
+    'm_of_new','m_of_total','m_of_ppv',
+    'm_best_show','m_total_usd','m_ajustar','m_next_shows','m_next_meta'
+  ];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.tagName === 'SELECT') el.selectedIndex = 0;
+    else el.value = '';
+  });
+  // Clear checkboxes
+  ['m_ck1','m_ck2','m_ck3','m_ck4','m_ck5','m_ck6','m_ck7'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.type === 'checkbox') el.checked = false;
+  });
 }
 
 function renderMonthHistory() {
