@@ -6285,45 +6285,55 @@ function anzParseCB(text) {
 
 // ── SC PARSER ──────────────────────────────────────────────────────
 function anzParseSC(text) {
-  // Format: Usuario 	 Fecha 	 Tipo 	 Tokens
-  // First line is header: Usuarios 	 Fecha 	 Tipo 	 Tokens
-  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-
+  // Stripchat se puede pegar en dos formatos:
+  //  (A) Tab-separado: "Usuario\tFecha\tTipo\tTokens" en una línea
+  //  (B) Línea por línea (lo más común): Usuario / Fecha / Tipo / [mensaje opcional] / Tokens
+  const rawLines = text.split('\n').map(l => l.trim()).filter(l => l);
   const entries = [];
-  let headerFound = false;
 
-  for (const line of lines) {
+  // ── Intento 1: formato TAB-separado ────────────────────────────────
+  for (const line of rawLines) {
     const parts = line.split('\t');
     if (parts.length >= 4) {
-      // Check header
-      if (parts[0].toLowerCase().includes('usuario')) { headerFound = true; continue; }
+      if (parts[0].toLowerCase().includes('usuario')) continue;
       const user = parts[0].trim();
       const fecha = parts[1].trim();
       const tipo = parts[2].trim();
       const tokens = parseInt(parts[3].replace(/[\s\u00a0,]/g, '')) || 0;
       if (tokens > 0) entries.push({ user, fecha, tipo, tokens });
-    } else {
-      // Try space-based parsing (tab-separated but browser might convert)
-      // Try to detect header
-      if (line.toLowerCase().includes('usuario') && line.toLowerCase().includes('tipo')) {
-        headerFound = true; continue;
-      }
     }
   }
 
-  if (!entries.length) {
-    // Try alternate parse: lines come in groups of 4
-    // Usuarios / Fecha / Tipo / Tokens
+  // ── Intento 2: formato LÍNEA POR LÍNEA ─────────────────────────────
+  if (entries.length === 0) {
+    const ls = rawLines.filter(l => {
+      const low = l.toLowerCase();
+      return !(low === 'usuarios' || low === 'usuario' || low === 'fecha' ||
+               low === 'tipo' || low === 'tokens' ||
+               (low.includes('usuario') && low.includes('tipo') && low.includes('token')));
+    });
+    const dateRe = /^\d{1,2} de \w+ de \d{4}\s+\d{1,2}:\d{2}$/i;
+    const tokenRe = /^-?[\d\s\u00a0,]+$/;
+    const isToken = (s) => tokenRe.test(s) && parseInt(s.replace(/[\s\u00a0,]/g,'')) > 0;
     let i = 0;
-    const ls = lines.filter(l => !l.toLowerCase().includes('usuarios') && !l.toLowerCase().includes('fecha') && !l.toLowerCase().includes('tipo') && l !== 'Tokens');
-    // Try to group by 4
-    while (i + 3 < ls.length) {
-      const user = ls[i];
-      const fecha = ls[i+1];
-      const tipo = ls[i+2];
-      const tokens = parseInt((ls[i+3]||'').replace(/[\s\u00a0,]/g, '')) || 0;
-      if (tokens > 0) entries.push({ user, fecha, tipo, tokens });
-      i += 4;
+    while (i < ls.length) {
+      if (dateRe.test(ls[i]) && i >= 1) {
+        const user = ls[i-1];
+        const fecha = ls[i];
+        let tipo = '';
+        let tokens = 0;
+        let j = i + 1;
+        if (j < ls.length && !dateRe.test(ls[j])) { tipo = ls[j]; j++; }
+        while (j < ls.length && !isToken(ls[j]) && !dateRe.test(ls[j])) { j++; }
+        if (j < ls.length && isToken(ls[j])) {
+          tokens = parseInt(ls[j].replace(/[\s\u00a0,]/g,'')) || 0;
+          j++;
+        }
+        if (tokens > 0 && tipo) entries.push({ user, fecha, tipo, tokens });
+        i = j;
+      } else {
+        i++;
+      }
     }
   }
 
@@ -6351,9 +6361,9 @@ function anzParseSC(text) {
 
   for (const e of entries) {
     const t = e.tipo.toLowerCase();
-    cats[e.tipo] = (cats[e.tipo] || 0) + e.tokens;
 
     if (t.includes('ticket')) {
+      cats[e.tipo] = (cats[e.tipo] || 0) + e.tokens;
       ticketTokens += e.tokens;
       ticketCount++;
     } else if (t === 'privado exclusivo' || t.includes('exclusivo')) {
@@ -6361,16 +6371,30 @@ function anzParseSC(text) {
       const rate = privTypes['privado exclusivo'].rate;
       privTypes['privado exclusivo'].tokens += rate;      // solo el tiempo
       privTypes['privado exclusivo'].count++;
-      if (e.tokens > rate) privTipsExtra += (e.tokens - rate); // exceso = propina
+      const baseAmt = Math.min(e.tokens, rate);
+      cats[e.tipo] = (cats[e.tipo] || 0) + baseAmt;        // categoría: solo el tiempo
+      if (e.tokens > rate) {
+        const extra = e.tokens - rate;
+        privTipsExtra += extra;                            // exceso = propina
+        cats['Propina en privado'] = (cats['Propina en privado'] || 0) + extra;
+      }
     } else if (t === 'show privado' || t === 'privado regular' || (t.includes('privado') && !t.includes('propina'))) {
       // Only count as time-based if it's NOT "propina privada"
       const key = t.includes('show') ? 'show privado' : 'privado regular';
       const rate = privTypes[key].rate;
       privTypes[key].tokens += rate;       // solo el tiempo
       privTypes[key].count++;
-      if (e.tokens > rate) privTipsExtra += (e.tokens - rate); // exceso = propina
+      const baseAmt = Math.min(e.tokens, rate);
+      cats[e.tipo] = (cats[e.tipo] || 0) + baseAmt;        // categoría: solo el tiempo
+      if (e.tokens > rate) {
+        const extra = e.tokens - rate;
+        privTipsExtra += extra;                            // exceso = propina
+        cats['Propina en privado'] = (cats['Propina en privado'] || 0) + extra;
+      }
+    } else {
+      // Resto de categorías (propinas públicas, anónimas, compras, etc.)
+      cats[e.tipo] = (cats[e.tipo] || 0) + e.tokens;
     }
-    // "propina privada" → NOT time-based, just a tip, skip from privTypes
 
     if (e.user && e.user !== 'Anónimo' && e.user !== 'Cuenta eliminada') {
       tippers[e.user] = (tippers[e.user] || 0) + e.tokens;
