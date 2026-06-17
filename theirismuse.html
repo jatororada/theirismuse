@@ -6127,12 +6127,22 @@ function anzParseCB(text) {
       let tokens = 0;
       let balance = null;
 
-      // Next line: action text (not a number, not a date)
+      // Next line: action text (e.g. "Propina de: USER")
       if (i < lines.length && !dateRe.test(lines[i]) && !tokenBalRe.test(lines[i]) && !tokenOnlyRe.test(lines[i])) {
         action = lines[i]; i++;
       }
 
-      // Next line: "TOKENS\tBALANCE" or just "TOKENS"
+      // Skip any chat-message lines between the action and the TOKENS\tBALANCE line.
+      // Messages are free text (not numbers, not dates, not token/balance lines).
+      // We advance until we hit the token line OR the next date (whichever comes first).
+      while (i < lines.length &&
+             !dateRe.test(lines[i]) &&
+             !tokenBalRe.test(lines[i]) &&
+             !tokenOnlyRe.test(lines[i])) {
+        i++; // skip message line
+      }
+
+      // Now: "TOKENS\tBALANCE" or just "TOKENS"
       if (i < lines.length) {
         const m = lines[i].match(/^(-?\d+)\t(\d+)$/);
         if (m) {
@@ -6336,6 +6346,9 @@ function anzParseSC(text) {
     'privado':            { tokens: 0, count: 0, rate: 32 }, // fallback
   };
 
+  // Propinas dadas DURANTE un privado (cuando una entrada excede la tarifa base)
+  let privTipsExtra = 0;
+
   for (const e of entries) {
     const t = e.tipo.toLowerCase();
     cats[e.tipo] = (cats[e.tipo] || 0) + e.tokens;
@@ -6344,13 +6357,18 @@ function anzParseSC(text) {
       ticketTokens += e.tokens;
       ticketCount++;
     } else if (t === 'privado exclusivo' || t.includes('exclusivo')) {
-      privTypes['privado exclusivo'].tokens += e.tokens;
+      // Cada entrada = 1 minuto a la tarifa base (60). El exceso es propina, no tiempo.
+      const rate = privTypes['privado exclusivo'].rate;
+      privTypes['privado exclusivo'].tokens += rate;      // solo el tiempo
       privTypes['privado exclusivo'].count++;
+      if (e.tokens > rate) privTipsExtra += (e.tokens - rate); // exceso = propina
     } else if (t === 'show privado' || t === 'privado regular' || (t.includes('privado') && !t.includes('propina'))) {
       // Only count as time-based if it's NOT "propina privada"
       const key = t.includes('show') ? 'show privado' : 'privado regular';
-      privTypes[key].tokens += e.tokens;
+      const rate = privTypes[key].rate;
+      privTypes[key].tokens += rate;       // solo el tiempo
       privTypes[key].count++;
+      if (e.tokens > rate) privTipsExtra += (e.tokens - rate); // exceso = propina
     }
     // "propina privada" → NOT time-based, just a tip, skip from privTypes
 
@@ -6420,6 +6438,7 @@ function anzParseSC(text) {
     privadoTokens,
     privadoCount,    // = total minutes
     privadoSesiones, // = number of private sessions
+    privadoTipsExtra: privTipsExtra, // propinas dadas DURANTE privados (exceso sobre tarifa)
     privBreakdown,   // per-type breakdown
     totalEntries: entries.length
   };
@@ -6540,7 +6559,8 @@ function anzRenderSC(r) {
         <div class="anz-priv-item"><div class="anz-priv-label">Tokens privados</div><div class="anz-priv-val" style="color:var(--sc)">${r.privadoTokens.toLocaleString('es')} tk</div></div>
         <div class="anz-priv-item"><div class="anz-priv-label">Duración total</div><div class="anz-priv-val">${r.privadoCount} min</div></div>
         <div class="anz-priv-item"><div class="anz-priv-label">En formato hora</div><div class="anz-priv-val" style="color:var(--gold)">${Math.floor(r.privadoCount/60)}h ${r.privadoCount%60}min</div></div>
-        <div class="anz-priv-item"><div class="anz-priv-label">Nota</div><div class="anz-priv-val" style="font-size:10px;color:var(--text3)">Propinas privadas excluidas del tiempo</div></div>
+        ${r.privadoTipsExtra > 0 ? `<div class="anz-priv-item"><div class="anz-priv-label">Propinas en privado</div><div class="anz-priv-val" style="color:var(--gold2)">+${r.privadoTipsExtra.toLocaleString('es')} tk</div></div>` : ''}
+        <div class="anz-priv-item"><div class="anz-priv-label">Nota</div><div class="anz-priv-val" style="font-size:10px;color:var(--text3)">${r.privadoTipsExtra > 0 ? 'Propinas dadas durante el privado contadas aparte' : 'Propinas privadas excluidas del tiempo'}</div></div>
       </div>
       ${r.privBreakdown && r.privBreakdown.length > 1 ? `
       <table class="anz-table" style="margin-top:10px;"><thead><tr>
