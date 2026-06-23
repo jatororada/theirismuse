@@ -6180,14 +6180,18 @@ function anzParseCB(text) {
   const positiveEntries = withBalance.filter(e => e.tokens > 0);
   if (!positiveEntries.length) return null;
 
-  // Oldest entry (last in array, CB newest-first) = balance inicial
+  // Oldest entry (last in array, CB newest-first)
   const oldestEntry = positiveEntries[positiveEntries.length - 1];
-  const balanceInicialAjustado = oldestEntry.balance;
+  // El balance de la entrada más antigua YA incluye su propio tip.
+  // El balance REAL antes de empezar = balance de esa entrada − sus tokens.
+  const balanceInicialAjustado = oldestEntry.balance - oldestEntry.tokens;
 
   // Newest entry with positive tokens = balance final
   const newestEntry = positiveEntries[0];
   const balanceFinal = newestEntry.balance;
 
+  // Tokens ganados = diferencia de balance. Ahora coincide exactamente
+  // con la suma de todas las propinas porque el balance inicial está bien ajustado.
   const tokensGanados = balanceFinal - balanceInicialAjustado;
 
   // Categorize
