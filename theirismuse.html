@@ -5250,12 +5250,39 @@ function renderWeekHistory() {
           <div class="rep-history-date">${d.desde} → ${d.hasta||''}</div>
           <div class="rep-history-info">SC $${parseFloat(d.sc_total||0).toFixed(0)} · CB +${cbGrowth} segs · ${d.streams||0} streams</div>
         </div>
-        <div style="display:flex;gap:8px;">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="rep-history-del" onclick="loadWeekReport('${key}')">cargar</button>
           <button class="rep-history-del" onclick="deleteReport('${key}','week')">✕</button>
         </div>`;
       list.appendChild(div);
     } catch(e) {}
   });
+}
+
+function loadWeekReport(key) {
+  const d = JSON.parse(_store.getItem(key));
+  if (!d) return;
+  setVal('w_desde', d.desde); setVal('w_hasta', d.hasta);
+  setVal('w_streams', d.streams); setVal('w_horas', d.horas);
+  setRadio('w_sab', d.sab);
+  setVal('w_cb_tk', d.cb_tk); setVal('w_cb_priv_tk', d.cb_priv_tk);
+  setVal('w_cb_priv_n', d.cb_priv_n); setVal('w_cb_priv_tipo', d.cb_priv_tipo); setVal('w_cb_priv_dur', d.cb_priv_dur);
+  setVal('w_cb_fans_start', d.cb_fans_start); setVal('w_cb_fans_end', d.cb_fans_end);
+  setVal('w_cb_fc', d.cb_fc);
+  setVal('w_sc_total', d.sc_total); setVal('w_sc_30h', d.sc_30h);
+  setVal('w_sc_priv_dur', d.sc_priv_dur); setVal('w_sc_priv_tipo', d.sc_priv_tipo);
+  setVal('w_sc_pago_tk', d.sc_pago_tk); setVal('w_sc_pago_usd', d.sc_pago_usd);
+  setVal('w_sc_stripscore', d.sc_stripscore); setVal('w_sc_rating', d.sc_rating);
+  setVal('w_sc_fans_start', d.sc_fans_start); setVal('w_sc_fans_end', d.sc_fans_end);
+  setVal('w_sc_fc', d.sc_fc);
+  setVal('w_of_new', d.of_new); setVal('w_of_total', d.of_total); setVal('w_of_ppv', d.of_ppv);
+  setRadio('w_teaser_vie', d.teaser_vie); setRadio('w_teaser_sab', d.teaser_sab);
+  setVal('w_best_show', d.best_show); setVal('w_best_day', d.best_day);
+  setVal('w_ajustar', d.ajustar);
+  setVal('w_next_vie', d.next_vie); setVal('w_next_sab', d.next_sab);
+  // Scroll al inicio del formulario semanal
+  const form = document.getElementById('rep-week');
+  if (form && form.scrollIntoView) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ── SAVE MONTH REPORT ────────────────────────────────────────────────
@@ -5340,12 +5367,36 @@ function renderMonthHistory() {
           <div class="rep-history-date">${d.mes} ${d.anio}</div>
           <div class="rep-history-info">SC $${parseFloat(d.sc_total||0).toFixed(0)} total · ${d.streams||0} streams · SC prom $${d.sc_30h||'—'}/h</div>
         </div>
-        <div style="display:flex;gap:8px;">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="rep-history-del" onclick="loadMonthReport('${key}')">cargar</button>
           <button class="rep-history-del" onclick="deleteReport('${key}','month')">✕</button>
         </div>`;
       list.appendChild(div);
     } catch(e) {}
   });
+}
+
+function loadMonthReport(key) {
+  const d = JSON.parse(_store.getItem(key));
+  if (!d) return;
+  setVal('m_mes', d.mes); setVal('m_anio', d.anio);
+  setVal('m_streams', d.streams); setVal('m_premium', d.premium);
+  setVal('m_cb_tk', d.cb_tk); setVal('m_cb_priv_tk', d.cb_priv_tk);
+  setVal('m_cb_fans_start', d.cb_fans_start); setVal('m_cb_fans_end', d.cb_fans_end); setVal('m_cb_fc', d.cb_fc);
+  setVal('m_sc_total', d.sc_total); setVal('m_sc_30h', d.sc_30h);
+  setVal('m_sc_pagos_n', d.sc_pagos_n); setVal('m_sc_pagos_usd', d.sc_pagos_usd);
+  setVal('m_sc_fans_start', d.sc_fans_start); setVal('m_sc_fans_end', d.sc_fans_end);
+  setVal('m_sc_fc', d.sc_fc); setVal('m_sc_rating', d.sc_rating);
+  setVal('m_of_new', d.of_new); setVal('m_of_total', d.of_total); setVal('m_of_ppv', d.of_ppv);
+  setVal('m_best_show', d.best_show); setVal('m_total_usd', d.total_usd);
+  setVal('m_ajustar', d.ajustar); setVal('m_next_shows', d.next_shows); setVal('m_next_meta', d.next_meta);
+  // Checkboxes
+  const setCk = (id, v) => { const el = document.getElementById(id); if (el && el.type === 'checkbox') el.checked = !!v; };
+  setCk('m_ck1', d.ck1); setCk('m_ck2', d.ck2); setCk('m_ck3', d.ck3); setCk('m_ck4', d.ck4);
+  setCk('m_ck5', d.ck5); setCk('m_ck6', d.ck6); setCk('m_ck7', d.ck7);
+  // Scroll al inicio del formulario mensual
+  const form = document.getElementById('rep-month');
+  if (form && form.scrollIntoView) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function deleteReport(key, type) {
