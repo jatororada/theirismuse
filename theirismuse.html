@@ -4622,6 +4622,871 @@ function makeGoals(goals, materials, showTitle, wd) {
   return block;
 }
 
+
+// ══════════════════════════════════════════════════════════════════
+// ESTRATEGIA UNIFICADA DE CONTENIDO — una sola fuente de verdad
+// ══════════════════════════════════════════════════════════════════
+// Cada día devuelve una lista ordenada de acciones:
+//   { hora, plat, nivel, accion, caption }
+// plat: 'tw' | 'ig' | 'of' | 'cbfc' | 'scfc'
+// Principios: IG máx 1 feed/día · días suaves mínimos · contenido
+// reutilizado separado 2-3h · sin dos posts misma red misma hora.
+function buildDayPlan(wd, show, nextFri, nextSat) {
+  show = show || 'el show de hoy';
+  nextFri = nextFri || 'el show del viernes';
+  nextSat = nextSat || 'el show del sábado';
+
+  // Helper para capital
+  const S = show;
+
+  const plans = {
+    // ── DOMINGO — Día de descanso · presencia mínima ────────────────
+    0: {
+      resumen: 'Descanso. Solo entrega lo prometido del sábado. Nada de contenido nuevo.',
+      acciones: [
+        { hora: '11:00am', plat: 'tw', accion: 'Post casual de descanso (1 foto lifestyle suave)',
+          caption: 'rest. breathe. think about you.\n\nback tomorrow — CB & SC 🖤\n#chaturbate #stripchat' },
+        { hora: '1:00pm', plat: 'of', accion: 'MURO: subir 2-3 fotos suaves del finde (retención de subs)',
+          caption: 'a little something from the weekend 🖤' },
+        { hora: '2:00pm', plat: 'cbfc', accion: 'DM a miembros CB: grabación del sábado',
+          caption: 'Hey 💛 last night\'s full show is yours — only for Fan Club members. Enjoy.' },
+        { hora: '2:15pm', plat: 'scfc', accion: 'DM a subs SC: grabación del sábado',
+          caption: 'Hey 🖤 the ticket show is in your inbox — just for you. Thank you for being here.' },
+      ]
+    },
+    // ── LUNES — Suave · 1 post X + stories ──────────────────────────
+    1: {
+      resumen: 'Día suave. Un anuncio en X, Stories en IG, contenido fresco al MURO tras el show.',
+      acciones: [
+        { hora: '10:00am', plat: 'tw', accion: 'Anuncio del stream (1 foto teaser del look)',
+          caption: 'I\'ve been thinking about tonight all morning.\n\n' + S + ' — 2:30PM COL 🖤\nCB & SC live — goals open from the start\n\n3:30PM EST | 2:30PM COL | 9:30PM CET\n#chaturbate #stripchat' },
+        { hora: '1:30pm', plat: 'ig', accion: 'Story countdown (sin feed nuevo hoy)',
+          caption: 'tonight 🖤 2:30PM COL\n' + S + ' — come find me' },
+        { hora: '2:00pm', plat: 'tw', accion: 'Going live (-30min)',
+          caption: '30 minutes. don\'t keep me waiting.\n\n' + S + ' @ 2:30PM COL 🖤\nCB & SC — goals live now' },
+        { hora: '9:30pm', plat: 'of', accion: 'MURO: subir 2-3 fotos del show de hoy',
+          caption: 'tonight\'s look 🖤 more on my page' },
+      ]
+    },
+    // ── MARTES — Suave + teaser viernes ─────────────────────────────
+    2: {
+      resumen: 'Suave. El único contenido de calidad hoy es el teaser del viernes (trabaja 72h).',
+      acciones: [
+        { hora: '9:00am', plat: 'tw', accion: 'Anuncio del stream (1 foto teaser)',
+          caption: 'today. ' + S + ' 🖤\n2:30PM COL — CB & SC\ngoals open from the start\n#chaturbate #stripchat' },
+        { hora: '12:00pm', plat: 'tw', accion: 'TEASER VIERNES ⚠️ (mejor foto/clip — trabaja 72h)',
+          caption: 'Friday is going to be special.\n\n' + nextFri + ' — mark your calendar 🖤\nFri 2:30PM COL · CB & SC' },
+        { hora: '2:00pm', plat: 'ig', accion: 'Story going live (sin feed hoy)',
+          caption: 'live now 🖤 ' + S + ' — CB & SC' },
+        { hora: '9:30pm', plat: 'of', accion: 'MURO: subir 2-3 fotos del show de hoy',
+          caption: 'from tonight 🖤' },
+      ]
+    },
+    // ── MIÉRCOLES — Suave + teaser sábado (post #1 de la semana) ────
+    3: {
+      resumen: 'Suave. El teaser del sábado es tu publicación más importante — un VIDEO trailer.',
+      acciones: [
+        { hora: '10:00am', plat: 'tw', accion: 'TEASER SÁBADO ⚠️ (video trailer — la pieza #1 de la semana)',
+          caption: 'Saturday. the one you\'ve been waiting for.\n\n' + nextSat + ' 🖤\nSat 2:30PM COL — premium show · CB & SC\nlimited ticket spots' },
+        { hora: '1:00pm', plat: 'ig', accion: '1 FEED del día: foto del show de hoy (IG-safe) + Story countdown',
+          caption: 'tonight 🖤 come see me\n2:30PM COL · link in bio' },
+        { hora: '2:00pm', plat: 'tw', accion: 'Going live (-30min)',
+          caption: 'almost time 🖤 ' + S + ' @ 2:30PM COL\nCB & SC — see you inside' },
+        { hora: '9:30pm', plat: 'of', accion: 'MURO: subir 2-3 fotos del show de hoy',
+          caption: 'tonight was something 🖤' },
+      ]
+    },
+    // ── JUEVES — FUERTE · arranca ventana de alto alcance ───────────
+    4: {
+      resumen: 'Empieza tu ventana fuerte. Aquí va el PPV de la semana (mejor día de venta).',
+      acciones: [
+        { hora: '10:00am', plat: 'tw', accion: 'Anuncio doble: hoy + recordatorio sábado (2-3 fotos carrusel)',
+          caption: 'two things.\n\n1) tonight — ' + S + ' 🖤\n2) Saturday — ' + nextSat + ' (you don\'t want to miss it)\n\nCB & SC · 2:30PM COL\n#chaturbate #stripchat' },
+        { hora: '12:00pm', plat: 'of', accion: 'PPV por DM: clip de 30-60s de un show anterior ($10-18) — mejor día de venta',
+          caption: 'Hey 💛 this week\'s highlight is in your inbox — just for you' },
+        { hora: '1:00pm', plat: 'ig', accion: '1 FEED del día: mezcla look de hoy + teaser sábado (Reel 15s)',
+          caption: 'this week 🖤 and Saturday is coming\nlink in bio' },
+        { hora: '2:00pm', plat: 'tw', accion: 'Going live (-30min)',
+          caption: 'doors open in 30 🖤 ' + S + '\nCB & SC · goals live' },
+        { hora: '9:30pm', plat: 'of', accion: 'MURO: subir 3-4 fotos del show de hoy',
+          caption: 'tonight 🖤 more where this came from' },
+        { hora: '9:45pm', plat: 'cbfc', accion: 'DM a miembros CB: adelanto exclusivo del sábado',
+          caption: 'Hey 💛 for you before anyone else — Saturday is going to be big. Here\'s a taste.' },
+      ]
+    },
+    // ── VIERNES — MÁXIMO alcance · tu mejor día ─────────────────────
+    5: {
+      resumen: 'Tu día de MAYOR alcance (cada post rinde 2-3x). Único día que aguanta volumen alto en X.',
+      acciones: [
+        { hora: '10:00am', plat: 'tw', accion: 'Anuncio del stream 🔥 (2 fotos teaser del look)',
+          caption: 'tonight. ' + S + ' 🖤\n\n2:30PM COL — CB & SC live\ngoals open from the start\n\n3:30PM EST | 2:30PM COL | 9:30PM CET\n#chaturbate #stripchat' },
+        { hora: '11:30am', plat: 'ig', accion: '1 FEED del día: foto premium + Reel 12-15s (IG prioriza Reels viernes)',
+          caption: 'tonight 🖤 you know where to find me\nlink in bio' },
+        { hora: '1:00pm', plat: 'tw', accion: 'Segundo post: video corto tipo trailer del ticket show',
+          caption: 'a preview of tonight 🖤\n' + S + ' — CB & SC\nticket show later · don\'t miss it' },
+        { hora: '2:00pm', plat: 'tw', accion: 'Going live (-30min)',
+          caption: '30 minutes 🖤 ' + S + '\nCB & SC — goals live now' },
+        { hora: '9:45pm', plat: 'of', accion: 'PPV por DM: mejor set del show (5-8 fotos) $10-15 — viernes vende fuerte',
+          caption: 'Hey 🖤 tonight\'s best moments — just for you. Check your DMs.' },
+        { hora: '10:15pm', plat: 'cbfc', accion: 'DM a miembros CB: grabación + acceso prioritario al sábado',
+          caption: 'Hey 💛 tonight\'s recording is yours — and you get Saturday before anyone else 🖤' },
+      ]
+    },
+    // ── SÁBADO — PREMIUM · show más rentable · audiencia global ──────
+    6: {
+      resumen: 'Show más rentable y audiencia global. Tu mejor contenido va hoy. PPV premium tras cerrar.',
+      acciones: [
+        { hora: '10:00am', plat: 'tw', accion: 'Anuncio premium ⭐ (2 fotos + video trailer del ticket show)',
+          caption: 'tonight is the one.\n\n' + S + ' 🖤\npremium show — 2:30PM COL\nCB & SC · limited ticket spots\n\nthis is the show you don\'t skip\n#chaturbate #stripchat' },
+        { hora: '11:30am', plat: 'ig', accion: '1 FEED del día: foto premium (mejor producción) + Stories LIMITED SPOTS',
+          caption: 'tonight 🖤 the big one\nlink in bio · limited spots' },
+        { hora: '1:00pm', plat: 'tw', accion: 'Segundo post: teaser corto de video con urgencia de cupos',
+          caption: 'spots are filling 🖤\ntonight\'s premium show — ' + S + '\nCB & SC · get your ticket' },
+        { hora: '2:00pm', plat: 'tw', accion: 'Going live (-30min) con urgencia del ticket show',
+          caption: 'almost time 🖤 ' + S + '\nticket show tonight — CB & SC\ndon\'t wait' },
+        { hora: '10:45pm', plat: 'of', accion: 'PPV por DM: SET PREMIUM del sábado (8-12 fotos + clip) $15-25 — lo más caro de la semana',
+          caption: 'Hey 🖤 tonight\'s premium set is ready — the full experience. Check your DMs.' },
+        { hora: '11:00pm', plat: 'of', accion: 'MURO: 2-3 fotos teaser (para subs que no compraron el PPV — los retiene)',
+          caption: 'a glimpse of tonight 🖤 the full set is in DMs' },
+        { hora: '11:15pm', plat: 'cbfc', accion: 'DM a miembros CB: grabación completa del show premium',
+          caption: 'Hey 💛 the full premium show is yours — the Fan Club benefit. Thank you for being here 🖤' },
+        { hora: '11:30pm', plat: 'scfc', accion: 'DM a subs SC: grabación completa del sábado',
+          caption: 'Hey 🖤 the full show recording is in your inbox. Just for you.' },
+      ]
+    },
+  };
+
+  return plans[wd] || plans[1];
+}
+
+
+// Render del plan unificado del día — hora → plataforma → acción → caption
+function makeUnifiedPlan(wd, show, nextFri, nextSat) {
+  const plan = buildDayPlan(wd, show, nextFri, nextSat);
+
+  const platMeta = {
+    'tw':   { label: '𝕏',     color:'#7ab0d0', bg:'rgba(58,106,138,.15)', name:'Twitter/X' },
+    'ig':   { label: 'IG',    color:'#e090b0', bg:'rgba(192,96,128,.15)', name:'Instagram' },
+    'of':   { label: 'OF',    color:'#e8b870', bg:'rgba(196,137,74,.15)', name:'OnlyFans' },
+    'cbfc': { label: 'CB·FC', color:'#e8a23a', bg:'rgba(232,162,58,.15)', name:'Fan Club CB' },
+    'scfc': { label: 'SC·FC', color:'#e07a9e', bg:'rgba(224,122,158,.15)', name:'Fan Club SC' },
+  };
+
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'grid-column:1/-1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;';
+
+  // Título
+  const title = document.createElement('div');
+  title.style.cssText = 'font-family:var(--serif);font-size:19px;color:var(--gold);margin-bottom:4px;';
+  title.textContent = '📅 Plan de publicaciones de hoy';
+  wrap.appendChild(title);
+
+  // Resumen estratégico del día
+  const resumen = document.createElement('div');
+  resumen.style.cssText = 'font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:16px;font-style:italic;padding-bottom:14px;border-bottom:1px solid var(--border);';
+  resumen.textContent = plan.resumen;
+  wrap.appendChild(resumen);
+
+  // Cada acción como una fila
+  plan.acciones.forEach((a, idx) => {
+    const pm = platMeta[a.plat] || platMeta['tw'];
+
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;flex-direction:column;gap:0;margin-bottom:' + (idx < plan.acciones.length-1 ? '14px' : '0') + ';';
+
+    // Cabecera de la acción: hora + plataforma + qué hacer
+    const head = document.createElement('div');
+    head.style.cssText = 'display:grid;grid-template-columns:58px 52px 1fr;gap:9px;align-items:start;';
+    head.innerHTML =
+      '<div style="font-family:var(--mono);font-size:11px;color:var(--gold);font-weight:600;padding-top:2px;">' + a.hora + '</div>' +
+      '<div style="font-family:var(--mono);font-size:8.5px;color:' + pm.color + ';background:' + pm.bg + ';border:1px solid ' + pm.color + '33;border-radius:4px;padding:3px 0;text-align:center;">' + pm.label + '</div>' +
+      '<div style="font-size:12.5px;color:var(--text);line-height:1.45;font-weight:500;">' + a.accion + '</div>';
+    row.appendChild(head);
+
+    // Caption copiable (si existe)
+    if (a.caption) {
+      const capWrap = document.createElement('div');
+      capWrap.style.cssText = 'margin-left:67px;margin-top:6px;background:var(--bg3);border-left:2px solid ' + pm.color + '55;border-radius:4px;padding:8px 11px;cursor:pointer;transition:background .15s;position:relative;';
+      capWrap.title = 'Clic para copiar';
+
+      const capText = document.createElement('div');
+      capText.style.cssText = 'font-size:11.5px;color:var(--text2);line-height:1.5;white-space:pre-wrap;';
+      capText.textContent = a.caption;
+      capWrap.appendChild(capText);
+
+      const copyHint = document.createElement('div');
+      copyHint.style.cssText = 'font-family:var(--mono);font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-top:5px;';
+      copyHint.textContent = '📋 clic para copiar';
+      capWrap.appendChild(copyHint);
+
+      capWrap.onclick = () => {
+        const doCopy = (txt) => {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(txt).catch(()=>{});
+          } else {
+            const ta = document.createElement('textarea');
+            ta.value = txt; document.body.appendChild(ta); ta.select();
+            try { document.execCommand('copy'); } catch(e){}
+            document.body.removeChild(ta);
+          }
+        };
+        doCopy(a.caption);
+        copyHint.textContent = '✓ copiado';
+        copyHint.style.color = 'var(--gold)';
+        capWrap.style.background = 'rgba(200,146,26,.08)';
+        setTimeout(() => {
+          copyHint.textContent = '📋 clic para copiar';
+          copyHint.style.color = 'var(--text3)';
+          capWrap.style.background = 'var(--bg3)';
+        }, 1400);
+      };
+      capWrap.onmouseenter = () => { if(!copyHint.textContent.includes('copiado')) capWrap.style.background = 'var(--surface2)'; };
+      capWrap.onmouseleave = () => { if(!copyHint.textContent.includes('copiado')) capWrap.style.background = 'var(--bg3)'; };
+
+      row.appendChild(capWrap);
+    }
+
+    wrap.appendChild(row);
+  });
+
+  return wrap;
+}
+
+
+
+
+
+// ══════════════════════════════════════════════════════════════════
+// CONTENIDO DE EVENTOS — todo lo específico de cada fecha
+// ══════════════════════════════════════════════════════════════════
+// Aparece SOLO el día del evento. Cada uno: noticias, conversaciones,
+// tipMenu temático, promos, retos, ideas de interacción.
+const EVENT_CONTENT = {
+  newyear: {
+    nombre: 'Año Nuevo', emoji: '🎊', color: 'var(--gold)',
+    noticias: ['Happy New Year 🎊 this year we\'re going all in — new shows and surprises', 'First day of the year: let\'s make this our best year together 💛'],
+    conversaciones: ['¿Cuál es tu propósito de año nuevo? el mío es consentirte más', '¿Empezamos el año con una meta juntos?'],
+    tipMenu: [{ name: '🎊 New Year Kiss', price: '50' }, { name: '💫 Primer deseo del año', price: '111' }],
+    promos: ['Show de Año Nuevo: primera meta del año a mitad de precio hoy'],
+    retos: ['Reto countdown: llegar a la meta antes de medianoche'],
+    ideas: ['Brindis virtual con los viewers', 'Pedir propósitos en el chat y comentarlos'],
+  },
+  reyes: {
+    nombre: 'Día de Reyes', emoji: '👑', color: 'var(--gold)',
+    noticias: ['Three Kings Day 👑 have you been good this year? I have gifts for those who have'],
+    conversaciones: ['Si fueras un Rey Mago, ¿qué regalo me traerías?', '¿Pediste algo especial a los Reyes?'],
+    tipMenu: [{ name: '👑 Reyes: pide un deseo', price: '111' }],
+    promos: ['Promo Reyes: triple contenido para quien complete el goal principal'],
+    retos: ['Reto de los 3 regalos: 3 goals = 3 sorpresas'],
+    ideas: ['Dinámica de "regalo sorpresa" por goals'],
+  },
+  bluemonday: {
+    nombre: 'Blue Monday', emoji: '🖤', color: 'var(--blue)',
+    noticias: ['Blue Monday is the saddest day of the year… let\'s fix that together 🖤'],
+    conversaciones: ['¿Día difícil? déjame alegrártelo', '¿Qué te sube el ánimo cuando estás triste?'],
+    tipMenu: [{ name: '🖤 Anti-blues show', price: '77' }],
+    promos: ['Blue Monday: show especial anti-tristeza con dinámicas divertidas'],
+    retos: ['Reto sonrisa: metas divertidas para levantar el ánimo'],
+    ideas: ['Ambiente alegre y juguetón', 'Música animada durante el show'],
+  },
+  valentine: {
+    nombre: 'San Valentín', emoji: '💕', color: 'var(--rose)',
+    noticias: ['Happy Valentine\'s Day 💕 the day of love — today is all romance and sensuality', 'Will you be my Valentine? 🌹 let\'s make today special'],
+    conversaciones: ['¿Tienes con quién pasar San Valentín o me dejas ser tu cita? 💕', '¿Qué es más romántico para ti: lento y suave o intenso?', '¿Cuál sería tu cita perfecta conmigo?'],
+    tipMenu: [{ name: '🌹 Rosa de San Valentín', price: '77' }, { name: '💕 Be my Valentine', price: '143' }, { name: '💋 Beso francés', price: '50' }],
+    promos: ['Ticket show romántico premium de San Valentín con sorpresas', 'Promo pareja: 2x1 en contenido especial hoy'],
+    retos: ['Reto del amor: llegar a la meta "corazón" para contenido romántico'],
+    ideas: ['Decoración romántica (velas, rosas)', 'Leer mensajes de amor de los viewers', 'Lencería roja especial'],
+  },
+  womensday: {
+    nombre: 'Día de la Mujer', emoji: '🌸', color: 'var(--rose)',
+    noticias: ['Women\'s Day 🌸 celebrating being a woman — sensual and powerful'],
+    conversaciones: ['¿Qué admiras más de una mujer segura de sí misma?', '¿Qué mujer te inspira?'],
+    tipMenu: [{ name: '🌸 Flor de mujer', price: '80' }, { name: '💪 Girl power', price: '100' }],
+    promos: ['Show empoderado con temática de feminidad y sensualidad'],
+    retos: ['Reto de empoderamiento: metas que celebran la feminidad'],
+    ideas: ['Mensaje de empoderamiento', 'Celebrar a las mujeres del chat'],
+  },
+  stpatrick: {
+    nombre: 'San Patricio', emoji: '☘️', color: 'var(--green)',
+    noticias: ['St. Patrick\'s Day ☘️ everything green today — help me celebrate?'],
+    conversaciones: ['¿Tienes algo verde puesto? yo sí 😏', '¿Crees en la suerte de los irlandeses?'],
+    tipMenu: [{ name: '☘️ Suerte irlandesa', price: '77' }, { name: '🍀 Trébol de 4 hojas', price: '44' }],
+    promos: ['Goal verde: todo temático de suerte y color verde'],
+    retos: ['Reto del trébol: 4 goals = 4 sorpresas de la suerte'],
+    ideas: ['Outfit verde', 'Dinámica "olla de oro" al final del arcoíris'],
+  },
+  earthday: {
+    nombre: 'Día de la Tierra', emoji: '🌍', color: 'var(--green)',
+    noticias: ['Earth Day 🌍 let\'s love the planet… and love each other a little too'],
+    conversaciones: ['¿Eres de cuidar el planeta? me parece sexy', '¿Playa, montaña o bosque?'],
+    tipMenu: [{ name: '🌍 Natural beauty', price: '60' }],
+    promos: ['Show con temática natural — belleza al natural'],
+    retos: ['Reto verde: metas eco-friendly'],
+    ideas: ['Look natural, poco maquillaje', 'Ambiente natural'],
+  },
+  laborday: {
+    nombre: 'Día del Trabajo', emoji: '🛠️', color: 'var(--gold2)',
+    noticias: ['Labor Day — today we rest… or work on something fun 😏'],
+    conversaciones: ['¿Día libre? pasémoslo juntos', '¿En qué trabajas? cuéntame'],
+    tipMenu: [{ name: '🛠️ Hard worker reward', price: '70' }],
+    promos: ['Promo día libre: contenido relajado y divertido'],
+    retos: ['Reto descanso: metas fáciles y divertidas'],
+    ideas: ['Ambiente relajado', 'Dinámica casual'],
+  },
+  cincomayo: {
+    nombre: 'Cinco de Mayo', emoji: '🌮', color: 'var(--rose)',
+    noticias: ['Cinco de Mayo 🌮 fiesta, color and lots of spicy fun'],
+    conversaciones: ['¿Fiesta mexicana o noche tranquila conmigo?', '¿Qué tan picante te gusta… la comida? 🌶️'],
+    tipMenu: [{ name: '🌮 Cinco de Mayo fiesta', price: '95' }, { name: '🌶️ Spicy tease', price: '55' }],
+    promos: ['Show temático mexicano con dinámicas de fiesta'],
+    retos: ['Reto picante: metas que suben la temperatura'],
+    ideas: ['Colores mexicanos', 'Música festiva', 'Ambiente de fiesta'],
+  },
+  mothersday: {
+    nombre: 'Día de la Madre', emoji: '🌷', color: 'var(--rose)',
+    noticias: ['Mother\'s Day 🌷 a day to pamper and be grateful'],
+    conversaciones: ['¿Ya saludaste a tu mamá? qué lindo', '¿Qué valoras más de las mujeres en tu vida?'],
+    tipMenu: [{ name: '🌷 Flor para mamá', price: '60' }],
+    promos: ['Show con temática de flores y ternura'],
+    retos: ['Reto flor: metas suaves y dulces'],
+    ideas: ['Ambiente floral', 'Tono cálido y dulce'],
+  },
+  summerstart: {
+    nombre: 'Inicio de Verano', emoji: '🌊', color: 'var(--blue)',
+    noticias: ['Summer is officially here 🌊 bikini season, beach and skin', 'First day of summer ☀️ get ready for lots of sun and beach content'],
+    conversaciones: ['¿Playa o piscina? yo me veo bien en ambas 😏', '¿Cuál es tu bikini favorito de los que uso?', '¿Planes de verano? déjame ser parte'],
+    tipMenu: [{ name: '🌊 Beach body', price: '100' }, { name: '👙 Primer bikini del verano', price: '150' }, { name: '☀️ Summer tease', price: '80' }],
+    promos: ['Kickoff verano: revelo el primer bikini de la temporada por goals'],
+    retos: ['Reto verano: metas acumulativas toda la temporada'],
+    ideas: ['Ambiente playero', 'Bikini nuevo', 'Música de verano'],
+  },
+  fathersday: {
+    nombre: 'Día del Padre', emoji: '👔', color: 'var(--blue)',
+    noticias: ['Father\'s Day 👔 to pamper those who deserve it'],
+    conversaciones: ['¿Eres papá o piensas serlo?', '¿Qué te hace sentir consentido?'],
+    tipMenu: [{ name: '👔 Daddy reward', price: '100' }],
+    promos: ['Show especial para consentir hoy'],
+    retos: ['Reto consentido: metas premium'],
+    ideas: ['Tono consentidor', 'Dinámica de premios'],
+  },
+  july4: {
+    nombre: '4 de Julio (US)', emoji: '🎆', color: 'var(--blue)',
+    noticias: ['4th of July 🎆 fireworks… and other kinds of fire 😏', 'Independence Day 🇺🇸 let\'s celebrate in style'],
+    conversaciones: ['¿Fuegos artificiales o algo más privado? 🎆', '¿Cómo celebras el 4 de julio?'],
+    tipMenu: [{ name: '🎆 Fireworks show', price: '150' }, { name: '🇺🇸 Red white & blue', price: '76' }],
+    promos: ['Show temático con colores US y dinámicas explosivas'],
+    retos: ['Reto fuegos: cada goal enciende un "fuego artificial"'],
+    ideas: ['Colores rojo/azul/blanco', 'Efectos festivos'],
+  },
+  colombiaindep: {
+    nombre: 'Independencia Colombia', emoji: '🇨🇴', color: 'var(--gold)',
+    noticias: ['Colombia\'s Independence Day 🇨🇴 pride and celebration', 'July 20th 🇨🇴 celebrating being Colombian with so much pride'],
+    conversaciones: ['¿Conoces Colombia? te muestro lo mejor 😏', '¿Qué sabes de mi país?'],
+    tipMenu: [{ name: '🇨🇴 Orgullo colombiano', price: '77' }, { name: '💛💙❤️ Tricolor tease', price: '100' }],
+    promos: ['Show temático tricolor con orgullo paisa'],
+    retos: ['Reto tricolor: 3 goals por los 3 colores de la bandera'],
+    ideas: ['Colores de la bandera', 'Mostrar cultura colombiana'],
+  },
+  birthday: {
+    nombre: 'Mi Cumpleaños', emoji: '🎂', color: 'var(--rose)',
+    noticias: ['IT\'S MY BIRTHDAY 🎂 let\'s celebrate together — today is a very special day 💛', 'It\'s my birthday 🎉 thank you for being here — I have surprises for you'],
+    conversaciones: ['¿Me das mi regalo de cumpleaños? 🎂', '¿Qué me regalarías en mi día especial?', '¿Brindamos juntos por mi cumpleaños?'],
+    tipMenu: [{ name: '🎂 Regalo de cumpleaños', price: '122' }, { name: '🎉 Happy Birthday tip', price: '50' }, { name: '🥂 Brindis de cumpleaños', price: '77' }],
+    promos: ['Show de cumpleaños premium con sorpresas especiales toda la noche', 'Meta de cumpleaños: regalo especial al alcanzarla'],
+    retos: ['Reto cumpleañero: llegar a mi "meta de cumpleaños" para sorpresa'],
+    ideas: ['Decoración de cumpleaños', 'Pastel y velas', 'Countdown de deseos', 'Agradecer a los viewers fieles'],
+  },
+  amoramistad: {
+    nombre: 'Amor y Amistad', emoji: '💛', color: 'var(--gold)',
+    noticias: ['Love & Friendship Day in Colombia 💛 let\'s celebrate together'],
+    conversaciones: ['¿Amigos o algo más? 💛', '¿Juegas al amigo secreto?', '¿Qué valoras más en una amistad?'],
+    tipMenu: [{ name: '💛 Amor y amistad', price: '95' }, { name: '🎁 Amigo secreto', price: '60' }],
+    promos: ['Show romántico estilo colombiano con dinámica de amigo secreto'],
+    retos: ['Reto amistad: metas compartidas entre viewers'],
+    ideas: ['Dinámica de amigo secreto', 'Regalos sorpresa', 'Ambiente cálido'],
+  },
+  diaraza: {
+    nombre: 'Día de la Raza', emoji: '🌎', color: 'var(--gold2)',
+    noticias: ['Columbus Day 🌎 celebrating our Latin culture and identity'],
+    conversaciones: ['¿Orgulloso de tus raíces?', '¿Conoces la cultura latina?'],
+    tipMenu: [{ name: '🌎 Latina pride', price: '77' }],
+    promos: ['Show con temática cultural latina'],
+    retos: ['Reto cultural: metas con sabor latino'],
+    ideas: ['Música latina', 'Mostrar orgullo cultural'],
+  },
+  halloween: {
+    nombre: 'Halloween', emoji: '🎃', color: 'var(--rose)',
+    noticias: ['Happy Halloween 🎃 the sexiest day of the year — costumes, mystery and seduction', 'Halloween is here 🖤 I have a very special costume for tonight', 'Trick or treat? 😈 today I choose treat'],
+    conversaciones: ['¿Te gusta mi disfraz de Halloween? 🎃', '¿Te dan miedo las brujas o te seducen? 🔮', '¿Trato o travesura? yo ya elegí 😈'],
+    tipMenu: [{ name: '🎃 Trick or treat', price: '100' }, { name: '🖤 Sexy costume reveal', price: '166' }, { name: '🔮 Witch spell', price: '77' }, { name: '😈 Naughty or nice', price: '88' }],
+    promos: ['Ticket show temático de Halloween premium con disfraz especial', 'Cada goal revela parte del disfraz de Halloween'],
+    retos: ['Reto del disfraz: goals para revelar el disfraz completo', 'Reto embrujado: metas de misterio y seducción'],
+    ideas: ['Disfraz sexy de Halloween', 'Decoración temática (velas, telarañas)', 'Maquillaje dramático', 'Ambiente de misterio', 'Dinámica trato o travesura'],
+  },
+  thanksgiving: {
+    nombre: 'Acción de Gracias', emoji: '🦃', color: 'var(--gold2)',
+    noticias: ['Happy Thanksgiving 🦃 I\'m grateful to have you all 💛', 'Thanksgiving — today I\'m thankful for this beautiful community'],
+    conversaciones: ['¿Por qué estás agradecido este año? yo por ti 💛', '¿Qué es lo que más agradeces de mis shows?'],
+    tipMenu: [{ name: '🦃 Thankful tip', price: '55' }, { name: '💛 Gratitude show', price: '111' }],
+    promos: ['Show de gratitud con dinámicas especiales de agradecimiento'],
+    retos: ['Reto agradecido: metas para celebrar la comunidad'],
+    ideas: ['Agradecer a viewers fieles por nombre', 'Ambiente cálido y familiar', 'Compartir agradecimientos'],
+  },
+  blackfriday: {
+    nombre: 'Black Friday', emoji: '🖤', color: 'var(--rose)',
+    noticias: ['BLACK FRIDAY 🖤 the best deals of the year on content — don\'t miss out', 'Today only: huge discounts on PPV, Fan Club and premium content 🖤'],
+    conversaciones: ['¿Ya viste mis ofertas de Black Friday? 🖤', '¿Qué contenido has querido? hoy está en descuento'],
+    tipMenu: [{ name: '🖤 Black Friday deal', price: '99' }, { name: '🔥 Flash sale unlock', price: '150' }],
+    promos: ['⚡ BLACK FRIDAY: descuentos grandes en PPV, Fan Club y contenido premium — TU mejor día de venta del año', 'Ofertas flash por tiempo limitado durante todo el show'],
+    retos: ['Reto de ofertas: metas desbloquean descuentos progresivos'],
+    ideas: ['Anunciar ofertas con urgencia', 'Contenido premium con descuento', 'Crear FOMO con tiempo limitado', 'Promocionar Fan Club con oferta especial'],
+  },
+  cybermonday: {
+    nombre: 'Cyber Monday', emoji: '💻', color: 'var(--blue)',
+    noticias: ['Cyber Monday 💻 special discounts on digital content — today only'],
+    conversaciones: ['¿Aprovechaste el Cyber Monday? tengo más ofertas 💻', '¿Qué contenido digital te interesa?'],
+    tipMenu: [{ name: '💻 Cyber deal', price: '88' }],
+    promos: ['Promo flash de contenido digital exclusivo con descuento'],
+    retos: ['Reto digital: metas para desbloquear packs con descuento'],
+    ideas: ['Ofertas de contenido digital', 'Packs especiales'],
+  },
+  easter: {
+    nombre: 'Pascua', emoji: '🐰', color: 'var(--rose)',
+    noticias: ['Happy Easter 🐰 shall we hunt for eggs together? I have hidden surprises'],
+    conversaciones: ['¿Buscamos los huevitos de Pascua juntos? 🥚', '¿Team chocolate o team conejito?'],
+    tipMenu: [{ name: '🐰 Easter surprise', price: '88' }, { name: '🥚 Huevo sorpresa', price: '111' }],
+    promos: ['Huevos sorpresa: cada goal revela un premio oculto'],
+    retos: ['Reto de Pascua: encontrar todos los huevos escondidos (goals)'],
+    ideas: ['Dinámica de huevos sorpresa', 'Orejas de conejito', 'Ambiente primaveral'],
+  },
+  goodfriday: {
+    nombre: 'Viernes Santo', emoji: '🙏', color: 'var(--text2)',
+    noticias: ['Good Friday 🙏 a few days of reflection — back soon with everything'],
+    conversaciones: ['¿Descansas en Semana Santa?', '¿Planes tranquilos para estos días?'],
+    tipMenu: [],
+    promos: ['Horario reducido por Semana Santa — shows premium concentrados'],
+    retos: [],
+    ideas: ['Considerar horario especial', 'Tono más tranquilo'],
+  },
+  nochebuena: {
+    nombre: 'Nochebuena', emoji: '🎄', color: 'var(--green)',
+    noticias: ['Christmas Eve 🎄 the holiday magic is in the air — let\'s celebrate together', 'Merry Christmas Eve 🎁 have you been good this year? Santa has rewards 🎅'],
+    conversaciones: ['¿Qué le pediste a Santa? yo puedo cumplir algunos deseos 🎅', '¿Navidad en familia o buscas compañía especial? 🎄', '¿Ya abriste algún regalo?'],
+    tipMenu: [{ name: '🎄 Christmas gift', price: '125' }, { name: '🎅 Santa\'s naughty list', price: '100' }, { name: '🎁 Unwrap me', price: '175' }],
+    promos: ['Ticket show navideño premium con temática de regalo'],
+    retos: ['Reto navideño: goals para "desenvolver" sorpresas'],
+    ideas: ['Decoración navideña', 'Gorro de Santa', 'Ambiente festivo', 'Dinámica de regalos'],
+  },
+  navidad: {
+    nombre: 'Navidad', emoji: '🎄', color: 'var(--green)',
+    noticias: ['Merry Christmas 🎄 thank you for being with me this year — I love you 💛', 'Magical Christmas 🎁 today is a day to celebrate and be pampered'],
+    conversaciones: ['¿Cómo pasaste la Navidad?', '¿Qué regalo te gustó más?', '¿Seguimos la fiesta juntos? 🎄'],
+    tipMenu: [{ name: '🎄 Merry Christmas', price: '125' }, { name: '🎁 Regalo navideño', price: '150' }],
+    promos: ['Show navideño especial — celebración con toda la comunidad'],
+    retos: ['Reto de Navidad: meta especial con premio navideño'],
+    ideas: ['Ambiente 100% navideño', 'Agradecer el año juntos', 'Tono festivo y cálido'],
+  },
+  nye: {
+    nombre: 'Fin de Año', emoji: '🎊', color: 'var(--gold)',
+    noticias: ['New Year\'s Eve 🎊 closing with the best show — thank you for this incredible year 💛', 'Last night of the year 🥂 let\'s do the countdown together'],
+    conversaciones: ['¿Cuál fue tu momento favorito del año conmigo?', '¿Listo para el countdown? 🎊', '¿Qué esperas del próximo año?'],
+    tipMenu: [{ name: '🎊 NYE countdown', price: '200' }, { name: '🥂 Brindis de fin de año', price: '100' }],
+    promos: ['Show de cierre de año con countdown y celebración especial'],
+    retos: ['Reto countdown: llegar a la meta antes de medianoche'],
+    ideas: ['Countdown a medianoche', 'Brindis virtual', 'Recap del año', 'Agradecer a la comunidad'],
+  },
+};
+
+
+// ══════════════════════════════════════════════════════════════════
+// MOTOR DE EVENTOS — calcula todas las fechas relevantes del año
+// ══════════════════════════════════════════════════════════════════
+// Fechas fijas y calculadas (Día de la Madre, Black Friday, Pascua, etc.)
+// Cada evento tiene su contenido temático que aparece SOLO ese día.
+
+// Helper: enésimo día-de-semana de un mes. Ej: 2º domingo de mayo.
+function nthWeekday(year, month, weekday, n) {
+  let count = 0;
+  const days = new Date(year, month+1, 0).getDate();
+  for (let d = 1; d <= days; d++) {
+    if (new Date(year, month, d).getDay() === weekday) {
+      count++;
+      if (count === n) return d;
+    }
+  }
+  return null;
+}
+
+// Helper: último día-de-semana de un mes. Ej: último lunes.
+function lastWeekday(year, month, weekday) {
+  const days = new Date(year, month+1, 0).getDate();
+  for (let d = days; d >= 1; d--) {
+    if (new Date(year, month, d).getDay() === weekday) return d;
+  }
+  return null;
+}
+
+// Helper: Domingo de Pascua (algoritmo de Gauss/Meeus)
+function easterSunday(year) {
+  const a = year % 19, b = Math.floor(year/100), c = year % 100;
+  const d = Math.floor(b/4), e = b % 4, f = Math.floor((b+8)/25);
+  const g = Math.floor((b-f+1)/3), h = (19*a+b-d-g+15) % 30;
+  const i = Math.floor(c/4), k = c % 4, l = (32+2*e+2*i-h-k) % 7;
+  const m = Math.floor((a+11*h+22*l)/451);
+  const month = Math.floor((h+l-7*m+114)/31) - 1; // 0-indexed
+  const day = ((h+l-7*m+114) % 31) + 1;
+  return { month, day };
+}
+
+// Devuelve el mapa de eventos del año: { "MM-DD": eventObj }
+function getYearEvents(year) {
+  const ev = {};
+  const add = (month, day, obj) => {
+    if (day == null) return;
+    const key = String(month+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+    ev[key] = obj;
+  };
+
+  // ── FECHAS FIJAS ──
+  add(0, 1, EVENT_CONTENT.newyear);
+  add(0, 6, EVENT_CONTENT.reyes);
+  add(1, 14, EVENT_CONTENT.valentine);
+  add(2, 8, EVENT_CONTENT.womensday);
+  add(2, 17, EVENT_CONTENT.stpatrick);
+  add(3, 22, EVENT_CONTENT.earthday);
+  add(4, 1, EVENT_CONTENT.laborday);
+  add(4, 5, EVENT_CONTENT.cincomayo);
+  add(5, 21, EVENT_CONTENT.summerstart);
+  add(6, 4, EVENT_CONTENT.july4);
+  add(6, 20, EVENT_CONTENT.colombiaindep);
+  add(6, 22, EVENT_CONTENT.birthday);
+  add(9, 12, EVENT_CONTENT.diaraza);
+  add(9, 31, EVENT_CONTENT.halloween);
+  add(11, 24, EVENT_CONTENT.nochebuena);
+  add(11, 25, EVENT_CONTENT.navidad);
+  add(11, 31, EVENT_CONTENT.nye);
+
+  // ── FECHAS CALCULADAS ──
+  // Blue Monday - 3er lunes de enero
+  add(0, nthWeekday(year, 0, 1, 3), EVENT_CONTENT.bluemonday);
+  // Día de la Madre Colombia - 2do domingo de mayo
+  add(4, nthWeekday(year, 4, 0, 2), EVENT_CONTENT.mothersday);
+  // Día del Padre Colombia - 3er domingo de junio
+  add(5, nthWeekday(year, 5, 0, 3), EVENT_CONTENT.fathersday);
+  // Amor y Amistad Colombia - 3er sábado de septiembre
+  add(8, nthWeekday(year, 8, 6, 3), EVENT_CONTENT.amoramistad);
+  // Acción de Gracias US - 4to jueves de noviembre
+  const thanksgiving = nthWeekday(year, 10, 4, 4);
+  add(10, thanksgiving, EVENT_CONTENT.thanksgiving);
+  // Black Friday - día después de Acción de Gracias
+  if (thanksgiving) {
+    const bfDate = new Date(year, 10, thanksgiving + 1);
+    add(bfDate.getMonth(), bfDate.getDate(), EVENT_CONTENT.blackfriday);
+    // Cyber Monday - lunes siguiente
+    const cmDate = new Date(year, 10, thanksgiving + 4);
+    add(cmDate.getMonth(), cmDate.getDate(), EVENT_CONTENT.cybermonday);
+  }
+  // Pascua - domingo calculado
+  const easter = easterSunday(year);
+  add(easter.month, easter.day, EVENT_CONTENT.easter);
+  // Viernes Santo - 2 días antes de Pascua
+  const gf = new Date(year, easter.month, easter.day - 2);
+  add(gf.getMonth(), gf.getDate(), EVENT_CONTENT.goodfriday);
+
+  return ev;
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// PREPARACIÓN DEL MES — solo contenido PERMANENTE del mes (día 1)
+// ══════════════════════════════════════════════════════════════════
+// Temática general, objetivos, cambios permanentes del Tip Menu,
+// campañas de varias semanas. NADA de eventos de día específico.
+const MONTH_GENERAL = {
+  0:  { tema:'Año Nuevo · Propósitos · Fresh Start', emoji:'🎊', enfoque:'Arranque de año con energía de metas nuevas. Contenido motivador y fresco.',
+        tipMenuPerm:[{name:'💫 Meta de año nuevo',price:'200'}], campanas:['Reto de Enero: metas acumulativas toda la primera semana','Establecer las metas mensuales de ingresos y seguidores'], contenido:['Preparar sets de "año nuevo, nueva yo"','Fotos con estética fresca y renovada'] },
+  1:  { tema:'Mes del Amor · Romance · Sensualidad', emoji:'💕', enfoque:'Todo el mes con vibra romántica y sensual, construyendo hacia San Valentín.',
+        tipMenuPerm:[{name:'💕 Love tokens',price:'50'}], campanas:['Campaña de romance: contenido sensual toda la primera quincena','Construir expectativa hacia San Valentín (14)'], contenido:['Sets de lencería romántica','Contenido de pareja/novia virtual'] },
+  2:  { tema:'Mujer · Primavera · Renovación', emoji:'🌸', enfoque:'Feminidad, empoderamiento y renovación primaveral.',
+        tipMenuPerm:[{name:'🌸 Spring vibes',price:'60'}], campanas:['Campaña primavera: nueva estética floral','Contenido de empoderamiento femenino'], contenido:['Sets primaverales con flores','Lencería de colores pastel'] },
+  3:  { tema:'Primavera · Renovación · Lluvias', emoji:'🌷', enfoque:'Época de lluvias en Colombia — contenido íntimo y acogedor para casa.',
+        tipMenuPerm:[{name:'🌧️ Cozy home',price:'60'}], campanas:['Campaña "en casa": contenido íntimo para días lluviosos','Maratones de contenido para quedarse dentro'], contenido:['Sets acogedores en casa','Ambiente íntimo y cálido'] },
+  4:  { tema:'Flores · Calor · Transición', emoji:'🌺', enfoque:'Transición al calor con energía vibrante y colores vivos.',
+        tipMenuPerm:[{name:'🔥 Heat wave',price:'130'}], campanas:['Campaña calor: adelanto de contenido veraniego','Aumentar sensualidad conforme sube la temperatura'], contenido:['Primeros sets veraniegos','Ropa ligera y colores vivos'] },
+  5:  { tema:'Orgullo · Inicio de Verano · Playa', emoji:'🏳️‍🌈', enfoque:'Comienza el verano — playa, bikinis, energía libre. Mes del Orgullo.',
+        tipMenuPerm:[{name:'👙 Bikini season',price:'150'},{name:'🏳️‍🌈 Pride love',price:'66'}], campanas:['Campaña Pride: shows temáticos con colores del arcoíris todo el mes','Kickoff de temporada de playa'], contenido:['Colección completa de bikinis','Sets de playa y sol'] },
+  6:  { tema:'Verano Pleno · Vacaciones · Calor Máximo', emoji:'☀️', enfoque:'Pleno verano — calor máximo, vacaciones, mínima ropa. Mes de tu cumpleaños.',
+        tipMenuPerm:[{name:'☀️ Summer heat',price:'100'}], campanas:['Campaña verano: contenido de playa y sol todo el mes','Construir hacia la semana de cumpleaños (22)'], contenido:['Sets veraniegos premium','Contenido de vacaciones'] },
+  7:  { tema:'Fin de Verano · Regreso a Clases', emoji:'📚', enfoque:'Últimas semanas de verano + temática de regreso a clases (colegiala/profesora).',
+        tipMenuPerm:[{name:'📚 Back to school',price:'90'}], campanas:['Campaña back to school: temática colegiala/profesora','Aprovechar últimas semanas de verano'], contenido:['Sets de colegiala/profesora','Último contenido veraniego'] },
+  8:  { tema:'Otoño · Amor y Amistad · Transición', emoji:'🍂', enfoque:'Inicio de otoño — colores cálidos, vibra cozy e íntima. Mes del amor paisa.',
+        tipMenuPerm:[{name:'🍂 Autumn vibes',price:'70'}], campanas:['Campaña otoño: nueva paleta cálida y cozy','Construir hacia Amor y Amistad'], contenido:['Sets otoñales acogedores','Estética cálida'] },
+  9:  { tema:'Halloween · Otoño · Misterio', emoji:'🎃', enfoque:'Todo el mes con temática de misterio y seducción oscura, construyendo hacia Halloween.',
+        tipMenuPerm:[{name:'🖤 Dark seduction',price:'130'}], campanas:['Campaña Halloween: misterio y seducción todo octubre','Preparar disfraces para la semana de Halloween'], contenido:['Sets de misterio y seducción','Preparar varios disfraces sexy'] },
+  10: { tema:'Gratitud · Black Friday · Pre-fiestas', emoji:'🦃', enfoque:'Mes de gratitud y grandes ofertas. Black Friday es la oportunidad clave.',
+        tipMenuPerm:[{name:'💛 Gratitude',price:'55'}], campanas:['⚡ Preparar TODO el contenido premium para Black Friday (mejor venta del año)','Campaña de gratitud hacia la comunidad'], contenido:['Preparar packs premium para Black Friday','Contenido de agradecimiento'] },
+  11: { tema:'Navidad · Fin de Año · Fiestas', emoji:'🎄', enfoque:'Magia navideña todo el mes — Novenas, Navidad y cierre de año.',
+        tipMenuPerm:[{name:'🎄 Christmas magic',price:'125'}], campanas:['Campaña navideña: temática festiva todo diciembre','Calendario de adviento: sorpresa diaria por goals','Preparar el gran show de Fin de Año'], contenido:['Sets navideños premium','Decoración festiva','Contenido de fin de año'] },
+};
+
+function makeMonthlyPrep(month, year) {
+  const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const g = MONTH_GENERAL[month] || MONTH_GENERAL[0];
+  const mKey = year + '_' + String(month+1).padStart(2,'0');
+  const storeKey = 'tm_prep_' + mKey;
+  let state = {};
+  try { const raw = _store.getItem(storeKey); if (raw) state = JSON.parse(raw); } catch(e) {}
+  state.checks = state.checks || {};
+  const save = () => { try { _store.setItem(storeKey, JSON.stringify(state)); } catch(e) {} };
+
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'grid-column:1/-1;background:linear-gradient(135deg,rgba(200,146,26,.07),rgba(224,122,158,.04));border:1px solid var(--gold);border-radius:12px;padding:22px 24px;margin-bottom:4px;';
+
+  const title = document.createElement('div');
+  title.style.cssText = 'font-family:var(--serif);font-size:23px;color:var(--gold);margin-bottom:3px;';
+  title.textContent = g.emoji + ' Preparación de ' + monthNames[month];
+  wrap.appendChild(title);
+  const temaLine = document.createElement('div');
+  temaLine.style.cssText = 'font-size:13px;color:var(--gold2);margin-bottom:8px;font-weight:500;';
+  temaLine.textContent = g.tema;
+  wrap.appendChild(temaLine);
+  const enfoque = document.createElement('div');
+  enfoque.style.cssText = 'font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:6px;font-style:italic;padding-bottom:14px;border-bottom:1px solid rgba(200,146,26,.2);';
+  enfoque.textContent = g.enfoque;
+  wrap.appendChild(enfoque);
+
+  const infoNote = document.createElement('div');
+  infoNote.style.cssText = 'font-size:11px;color:var(--text3);margin:12px 0 6px;line-height:1.5;';
+  infoNote.textContent = 'Esto es lo que dura TODO el mes. El contenido de cada festividad o evento aparecerá automáticamente en su fecha correspondiente dentro del cronograma.';
+  wrap.appendChild(infoNote);
+
+  const sectionTitle = (txt, emoji) => {
+    const t = document.createElement('div');
+    t.style.cssText = 'font-family:var(--mono);font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin:18px 0 10px;padding-top:14px;border-top:1px solid rgba(200,146,26,.2);';
+    t.textContent = (emoji?emoji+' ':'') + txt;
+    return t;
+  };
+
+  // Checklist de preparación permanente
+  wrap.appendChild(sectionTitle('Preparación general del mes', '✓'));
+  const baseTasks = [
+    { id:'tema', label:'Definir la temática general y estética del mes' },
+    { id:'objetivos', label:'Fijar objetivos del mes (ingresos, seguidores, Fan Club)' },
+    { id:'tipmenu_perm', label:'Aplicar cambios permanentes del Tip Menu del mes' },
+    { id:'campanas', label:'Activar campañas/estrategias de varias semanas' },
+    { id:'contenido', label:'Preparar el contenido que se usará todo el mes' },
+    { id:'bio', label:'Actualizar bio y links de las plataformas' },
+  ];
+  const progBar = document.createElement('div');
+  progBar.style.cssText = 'height:7px;background:var(--bg3);border-radius:4px;overflow:hidden;margin-bottom:5px;';
+  const progFill = document.createElement('div');
+  progFill.style.cssText = 'height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:4px;transition:width .3s;';
+  progBar.appendChild(progFill);
+  wrap.appendChild(progBar);
+  const progLabel = document.createElement('div');
+  progLabel.style.cssText = 'font-family:var(--mono);font-size:9.5px;color:var(--text3);margin-bottom:12px;';
+  wrap.appendChild(progLabel);
+
+  const checkList = document.createElement('div');
+  checkList.style.cssText = 'display:flex;flex-direction:column;gap:2px;';
+  wrap.appendChild(checkList);
+
+  const updateProg = () => {
+    const done = baseTasks.filter(t => state.checks[t.id]).length;
+    const pct = Math.round(done/baseTasks.length*100);
+    progFill.style.width = pct + '%';
+    progLabel.textContent = done + ' de ' + baseTasks.length + ' · ' + pct + '% completado';
+  };
+  const renderChecks = () => {
+    checkList.innerHTML = '';
+    baseTasks.forEach(t => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:flex-start;gap:10px;padding:7px 8px;border-radius:6px;cursor:pointer;';
+      row.onmouseenter = () => row.style.background = 'rgba(255,255,255,.03)';
+      row.onmouseleave = () => row.style.background = 'transparent';
+      const checked = !!state.checks[t.id];
+      const box = document.createElement('div');
+      box.style.cssText = 'flex-shrink:0;width:17px;height:17px;border-radius:4px;border:1.5px solid ' + (checked?'var(--gold)':'var(--border2)') + ';background:' + (checked?'var(--gold)':'transparent') + ';display:flex;align-items:center;justify-content:center;margin-top:1px;';
+      box.innerHTML = checked ? '<span style="color:#1a1a1a;font-size:11px;font-weight:700;">✓</span>' : '';
+      const lbl = document.createElement('div');
+      lbl.style.cssText = 'font-size:12px;color:' + (checked?'var(--text3)':'var(--text)') + ';line-height:1.4;' + (checked?'text-decoration:line-through;':'');
+      lbl.textContent = t.label;
+      row.appendChild(box); row.appendChild(lbl);
+      row.onclick = () => { state.checks[t.id] = !state.checks[t.id]; save(); renderChecks(); updateProg(); };
+      checkList.appendChild(row);
+    });
+  };
+  renderChecks(); updateProg();
+
+  // Cambios permanentes del Tip Menu
+  if (g.tipMenuPerm && g.tipMenuPerm.length) {
+    wrap.appendChild(sectionTitle('Cambios permanentes del Tip Menu', '💰'));
+    const th = document.createElement('div');
+    th.style.cssText = 'font-size:11px;color:var(--text3);margin-bottom:10px;';
+    th.textContent = 'Ítems que estarán todo el mes (los temáticos de cada fecha aparecen en su día).';
+    wrap.appendChild(th);
+    g.tipMenuPerm.forEach(item => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;background:var(--bg3);border-radius:6px;padding:9px 13px;margin-bottom:5px;';
+      row.innerHTML = '<span style="font-size:12.5px;color:var(--text);">' + item.name + '</span><span style="font-family:var(--mono);font-size:11px;color:var(--gold2);background:rgba(200,146,26,.1);border:1px solid rgba(200,146,26,.25);border-radius:4px;padding:3px 9px;">' + item.price + ' tk</span>';
+      wrap.appendChild(row);
+    });
+  }
+
+  // Campañas de varias semanas
+  wrap.appendChild(sectionTitle('Campañas y estrategias del mes', '🎯'));
+  g.campanas.forEach(c => {
+    const isHl = c.startsWith('⚡');
+    const card = document.createElement('div');
+    card.style.cssText = 'background:' + (isHl?'rgba(224,122,158,.08)':'var(--bg3)') + ';border-left:2px solid ' + (isHl?'var(--rose)':'var(--gold2)') + ';border-radius:5px;padding:9px 12px;margin-bottom:6px;font-size:12px;color:var(--text2);line-height:1.5;';
+    card.textContent = c;
+    wrap.appendChild(card);
+  });
+
+  // Contenido a preparar
+  wrap.appendChild(sectionTitle('Contenido a preparar para el mes', '📸'));
+  g.contenido.forEach(c => {
+    const card = document.createElement('div');
+    card.style.cssText = 'background:var(--bg3);border-left:2px solid var(--blue);border-radius:5px;padding:9px 12px;margin-bottom:6px;font-size:12px;color:var(--text2);line-height:1.5;';
+    card.textContent = c;
+    wrap.appendChild(card);
+  });
+
+  return wrap;
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// APARTADO DE EVENTO — aparece SOLO el día de la festividad/evento
+// ══════════════════════════════════════════════════════════════════
+function makeEventBlock(evt, month, year, day) {
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'grid-column:1/-1;background:linear-gradient(135deg,' + evt.color + '18,transparent);border:1.5px solid ' + evt.color + ';border-radius:12px;padding:20px 22px;margin-bottom:4px;';
+
+  // Encabezado del evento
+  const head = document.createElement('div');
+  head.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:4px;';
+  const emoji = document.createElement('span');
+  emoji.style.cssText = 'font-size:26px;';
+  emoji.textContent = evt.emoji;
+  head.appendChild(emoji);
+  const nm = document.createElement('div');
+  nm.style.cssText = 'font-family:var(--serif);font-size:21px;color:' + evt.color + ';';
+  nm.textContent = evt.nombre;
+  head.appendChild(nm);
+  wrap.appendChild(head);
+
+  const badge = document.createElement('div');
+  badge.style.cssText = 'display:inline-block;font-family:var(--mono);font-size:9px;color:' + evt.color + ';background:' + evt.color + '18;border:1px solid ' + evt.color + '44;border-radius:10px;padding:3px 10px;margin-bottom:16px;';
+  badge.textContent = '✨ CONTENIDO ESPECIAL DE HOY';
+  wrap.appendChild(badge);
+
+  const sectionTitle = (txt, emoji) => {
+    const t = document.createElement('div');
+    t.style.cssText = 'font-family:var(--mono);font-size:9.5px;color:' + evt.color + ';text-transform:uppercase;letter-spacing:.08em;margin:16px 0 9px;padding-top:12px;border-top:1px solid ' + evt.color + '33;';
+    t.textContent = (emoji?emoji+' ':'') + txt;
+    return t;
+  };
+
+  const copyCard = (text) => {
+    const card = document.createElement('div');
+    card.style.cssText = 'background:var(--bg3);border-left:2px solid ' + evt.color + ';border-radius:5px;padding:8px 12px;cursor:pointer;transition:background .15s;margin-bottom:5px;';
+    card.title = 'Clic para copiar';
+    const t = document.createElement('div');
+    t.style.cssText = 'font-size:12px;color:var(--text2);line-height:1.5;';
+    t.textContent = text;
+    card.appendChild(t);
+    card.onclick = () => {
+      const doCopy = (txt) => {
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).catch(()=>{});
+        else { const ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} document.body.removeChild(ta); }
+      };
+      doCopy(text);
+      const orig = card.style.background;
+      card.style.background = evt.color + '20';
+      const hint = document.createElement('span');
+      hint.textContent = ' ✓ copiado';
+      hint.style.cssText = 'color:' + evt.color + ';font-size:10px;font-family:var(--mono);';
+      t.appendChild(hint);
+      setTimeout(() => { card.style.background = orig; if(hint.parentNode) hint.remove(); }, 1200);
+    };
+    card.onmouseenter = () => card.style.background = 'var(--surface2)';
+    card.onmouseleave = () => card.style.background = 'var(--bg3)';
+    return card;
+  };
+
+  // Noticias
+  if (evt.noticias && evt.noticias.length) {
+    wrap.appendChild(sectionTitle('Noticias para bots', '📰'));
+    const h = document.createElement('div');
+    h.style.cssText = 'font-size:10.5px;color:var(--text3);margin-bottom:8px;';
+    h.textContent = 'Clic para copiar y pegar en tus bots hoy.';
+    wrap.appendChild(h);
+    evt.noticias.forEach(n => wrap.appendChild(copyCard(n)));
+  }
+
+  // Conversaciones
+  if (evt.conversaciones && evt.conversaciones.length) {
+    wrap.appendChild(sectionTitle('Conversaciones y preguntas', '💬'));
+    evt.conversaciones.forEach(c => wrap.appendChild(copyCard(c)));
+  }
+
+  // Tip Menu temático
+  if (evt.tipMenu && evt.tipMenu.length) {
+    wrap.appendChild(sectionTitle('Tip Menu temático de hoy', '💰'));
+    const grid = document.createElement('div');
+    grid.style.cssText = 'display:flex;flex-direction:column;gap:5px;';
+    evt.tipMenu.forEach(item => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;background:var(--bg3);border-radius:6px;padding:8px 13px;';
+      row.innerHTML = '<span style="font-size:12.5px;color:var(--text);">' + item.name + '</span><span style="font-family:var(--mono);font-size:11px;color:' + evt.color + ';background:' + evt.color + '18;border:1px solid ' + evt.color + '44;border-radius:4px;padding:3px 9px;">' + item.price + ' tk</span>';
+      grid.appendChild(row);
+    });
+    wrap.appendChild(grid);
+  }
+
+  // Promos
+  if (evt.promos && evt.promos.length) {
+    wrap.appendChild(sectionTitle('Promociones especiales', '🎯'));
+    evt.promos.forEach(p => {
+      const isHl = p.startsWith('⚡');
+      const card = document.createElement('div');
+      card.style.cssText = 'background:' + (isHl?evt.color+'12':'var(--bg3)') + ';border-left:2px solid ' + evt.color + ';border-radius:5px;padding:8px 12px;margin-bottom:5px;font-size:12px;color:var(--text2);line-height:1.5;';
+      card.textContent = p;
+      wrap.appendChild(card);
+    });
+  }
+
+  // Retos y dinámicas
+  if (evt.retos && evt.retos.length) {
+    wrap.appendChild(sectionTitle('Retos y dinámicas', '🏆'));
+    evt.retos.forEach(r => {
+      const card = document.createElement('div');
+      card.style.cssText = 'background:var(--bg3);border-left:2px solid ' + evt.color + ';border-radius:5px;padding:8px 12px;margin-bottom:5px;font-size:12px;color:var(--text2);line-height:1.5;';
+      card.textContent = r;
+      wrap.appendChild(card);
+    });
+  }
+
+  // Ideas de interacción
+  if (evt.ideas && evt.ideas.length) {
+    wrap.appendChild(sectionTitle('Ideas de interacción', '💡'));
+    const ideasWrap = document.createElement('div');
+    ideasWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;';
+    evt.ideas.forEach(idea => {
+      const chip = document.createElement('div');
+      chip.style.cssText = 'font-size:11px;color:var(--text2);background:var(--bg3);border:1px solid ' + evt.color + '33;border-radius:12px;padding:5px 11px;';
+      chip.textContent = idea;
+      ideasWrap.appendChild(chip);
+    });
+    wrap.appendChild(ideasWrap);
+  }
+
+  return wrap;
+}
+
+
 function openDetail(key, d) {
   const panel = document.getElementById('detailPanel');
   const data = DAY_DB[key];
@@ -4635,6 +5500,11 @@ function openDetail(key, d) {
   const dpGrid = document.getElementById('dpGrid');
   dpGrid.innerHTML = '';
   dpGrid.style.gridTemplateColumns = window.innerWidth <= 768 ? '1fr' : '1fr 1fr';
+
+  // Día 1 del mes: mostrar bloque de Preparación Mensual al inicio
+  if (d === 1) {
+    dpGrid.appendChild(makeMonthlyPrep(calM, calY));
+  }
 
 
 
@@ -4814,30 +5684,14 @@ function openDetail(key, d) {
       _fridayShow   = (DAY_DB[_friKey] && DAY_DB[_friKey].title) ? DAY_DB[_friKey].title : pickPoolShow(5, _friDoy, calY, calM, _friD).show;
       _saturdayShow = (DAY_DB[_satKey] && DAY_DB[_satKey].title) ? DAY_DB[_satKey].title : pickPoolShow(6, _satDoy, calY, calM, _satD).show;
     }
-    const realCaptions = syncCaptionHours(buildCaptions(data.title, date.getDay(), data.type, _fridayShow, _saturdayShow), date.getDay());
-    const socialBlock = makeBlock('Publicaciones en redes — Captions listos 📋', 'var(--gold)', realCaptions);
-    socialBlock.style.gridColumn = '1 / -1';
-    dpGrid.appendChild(makePostTimesBlock(date.getDay()));
-    dpGrid.appendChild(socialBlock);
-
-    // Block 4: OnlyFans (acciones con hora) + Fan Club (durante stream)
-    if(data.of && data.of.length){
-      // Items with hour prefix go to OF block, 🎙 items go to stream block
-      const ofItems = data.of.filter(i => !i.includes('Fan Club') || i.startsWith('🕙') || i.startsWith('🕛') || i.startsWith('🕑') || i.startsWith('🕓'));
-      const fcStreamItems = data.of.filter(i => i.startsWith('🎙') || (i.includes('Fan Club') && !i.startsWith('🕙') && !i.startsWith('🕛') && !i.startsWith('🕑') && !i.startsWith('🕓')));
-
-      // Build generic fc for DAY_DB days using getGenericDay
-      const gdFc = getGenericDay(key, d, date.getDay(), calY, calM);
-
-      if(ofItems.length){
-        const ofBlock = makeBlock('OnlyFans & Fan Club — Acciones con hora', 'var(--rose)', ofItems);
-        ofBlock.style.gridColumn = '1 / -1';
-        dpGrid.appendChild(ofBlock);
-      }
-      if(gdFc.fc && gdFc.fc.length){
-        const fcBlock = makeBlock('Durante el stream — Fan Club CB + SC', 'var(--purple)', gdFc.fc);
-        fcBlock.style.gridColumn = '1 / -1';
-        dpGrid.appendChild(fcBlock);
+    // NUEVO: bloque unificado de plan de publicaciones (hora → plataforma → acción → caption)
+    dpGrid.appendChild(makeUnifiedPlan(date.getDay(), data.title, _fridayShow, _saturdayShow));
+    // Detectar si hoy es una fecha especial y mostrar su apartado
+    {
+      const _evKey = String(calM+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+      const _yearEv = getYearEvents(calY);
+      if (_yearEv[_evKey]) {
+        dpGrid.appendChild(makeEventBlock(_yearEv[_evKey], calM, calY, d));
       }
     }
   } else {
@@ -4850,13 +5704,27 @@ function openDetail(key, d) {
       gdGoalsBlock.style.gridColumn = '1 / -1';
       dpGrid.appendChild(gdGoalsBlock);
     }
-    const sb = makeBlock('Publicaciones en redes — Captions listos 📋', 'var(--gold)', gd.social); // captions include correct fri/sat show names
-    sb.style.gridColumn='1/-1';
-    dpGrid.appendChild(makePostTimesBlock(date.getDay()));
-    dpGrid.appendChild(sb);
-    // Split OF and Fan Club
-    if(gd.of && gd.of.length){ const ob=makeBlock('OnlyFans & Fan Club — Acciones con hora','var(--rose)',gd.of); ob.style.gridColumn='1/-1'; dpGrid.appendChild(ob); }
-    if(gd.fc && gd.fc.length){ const fb=makeBlock('Durante el stream — Fan Club CB + SC','var(--purple)',gd.fc); fb.style.gridColumn='1/-1'; dpGrid.appendChild(fb); }
+    // NUEVO: bloque unificado de plan de publicaciones (hora → plataforma → acción → caption)
+    // Calcular nombres de shows de viernes y sábado de esta semana para los teasers
+    let _gFriShow = '', _gSatShow = '';
+    {
+      const _wd = date.getDay();
+      const _friD = d + (5 - _wd), _satD = d + (6 - _wd);
+      const _friKey = calY+'-'+String(calM+1).padStart(2,'0')+'-'+String(_friD).padStart(2,'0');
+      const _satKey = calY+'-'+String(calM+1).padStart(2,'0')+'-'+String(_satD).padStart(2,'0');
+      const _friDoy = (calM)*31 + _friD, _satDoy = (calM)*31 + _satD;
+      _gFriShow = (DAY_DB[_friKey] && DAY_DB[_friKey].title) ? DAY_DB[_friKey].title : pickPoolShow(5, _friDoy, calY, calM, _friD).show;
+      _gSatShow = (DAY_DB[_satKey] && DAY_DB[_satKey].title) ? DAY_DB[_satKey].title : pickPoolShow(6, _satDoy, calY, calM, _satD).show;
+    }
+    dpGrid.appendChild(makeUnifiedPlan(date.getDay(), gd.title, _gFriShow, _gSatShow));
+    // Detectar si hoy es una fecha especial y mostrar su apartado
+    {
+      const _evKey = String(calM+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+      const _yearEv = getYearEvents(calY);
+      if (_yearEv[_evKey]) {
+        dpGrid.appendChild(makeEventBlock(_yearEv[_evKey], calM, calY, d));
+      }
+    }
   }
 
   panel.style.display = 'block';
