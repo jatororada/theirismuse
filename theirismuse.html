@@ -4460,6 +4460,54 @@ function renderCal() {
 }
 
 // ── GOAL CHIPS RENDERER ──────────────────────────────────────────────
+
+// ══════════════════════════════════════════════════════════════════
+// TAREAS DE DESCANSO — para domingos (sin goals de tokens de show)
+// ══════════════════════════════════════════════════════════════════
+// El domingo es descanso activo: no hay show en vivo, así que no tiene
+// goals de tokens. Solo tareas de mantenimiento pasivo (OF, Fan Club,
+// reportes). Se muestran como lista simple, sin precios.
+function makeRestTasks(tasks) {
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'grid-column:1/-1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 18px;';
+
+  const head = document.createElement('div');
+  head.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;';
+  const label = document.createElement('div');
+  label.style.cssText = 'font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;';
+  label.textContent = '😴 Tareas del día';
+  head.appendChild(label);
+  const badge = document.createElement('div');
+  badge.style.cssText = 'font-family:var(--serif);font-size:13px;color:var(--text3);font-style:italic;';
+  badge.textContent = 'Descanso activo — sin stream';
+  head.appendChild(badge);
+  wrap.appendChild(head);
+
+  const note = document.createElement('div');
+  note.style.cssText = 'font-size:11px;color:var(--text3);margin-bottom:14px;line-height:1.5;';
+  note.textContent = 'Hoy no hay show en vivo, así que no hay goals de tokens. Solo ingreso pasivo: entrega lo del sábado, revisa números y prepara la semana.';
+  wrap.appendChild(note);
+
+  const list = document.createElement('div');
+  list.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
+  (tasks || []).forEach(t => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:flex-start;gap:11px;background:var(--bg3);border-left:2px solid var(--text3);border-radius:5px;padding:10px 13px;';
+    const dot = document.createElement('div');
+    dot.style.cssText = 'flex-shrink:0;width:6px;height:6px;border-radius:50%;background:var(--text3);margin-top:6px;';
+    row.appendChild(dot);
+    const txt = document.createElement('div');
+    txt.style.cssText = 'font-size:12.5px;color:var(--text2);line-height:1.5;';
+    txt.textContent = t;
+    row.appendChild(txt);
+    list.appendChild(row);
+  });
+  wrap.appendChild(list);
+
+  return wrap;
+}
+
+
 function makeGoals(goals, materials, showTitle, wd) {
   const block = document.createElement('div');
   block.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;';
@@ -5658,14 +5706,19 @@ function openDetail(key, d) {
     ].filter(Boolean);
     dpGrid.appendChild(makeBlock('Horario & Plataformas', 'var(--blue)', schedItems));
 
-    // Block 2: Goals del stream — visual chips
+    // Block 2: Goals del stream — o tareas de descanso si es domingo/rest
     {
-      const _restGoals = ['Subir contenido a OF — PPV del sábado pasado','DM grabación a miembros CB Fan Club','DM grabación ticket show a miembros SC Fan Club','Review KPIs — tokens, income/hour, followers','Plan shows and teasers for next week','Preparar materiales para el próximo show premium'];
-      const fallbackGoals = data.type === 'rest' ? _restGoals : (data.goals && data.goals.length ? data.goals : _restGoals);
-      const goalsToShow = (data.goals && data.goals.length) ? data.goals : fallbackGoals;
-      const goalsBlock = makeGoals(goalsToShow, data.prep || null, data.title || null, date.getDay());
-      goalsBlock.style.gridColumn = '1 / -1';
-      dpGrid.appendChild(goalsBlock);
+      const _restTasks = ['Subir contenido a OF — PPV del sábado pasado','DM grabación a miembros CB Fan Club','DM grabación ticket show a miembros SC Fan Club','Revisar KPIs — tokens, ingresos/hora, seguidores','Planear shows y teasers de la próxima semana','Preparar materiales para el próximo show premium'];
+      if (date.getDay() === 0 || data.type === 'rest') {
+        // Domingo: descanso activo, sin goals de tokens
+        const restTasks = (data.goals && data.goals.length) ? data.goals : _restTasks;
+        dpGrid.appendChild(makeRestTasks(restTasks));
+      } else {
+        const goalsToShow = (data.goals && data.goals.length) ? data.goals : _restTasks;
+        const goalsBlock = makeGoals(goalsToShow, data.prep || null, data.title || null, date.getDay());
+        goalsBlock.style.gridColumn = '1 / -1';
+        dpGrid.appendChild(goalsBlock);
+      }
     }
 
     // Block 3: Publicaciones en redes — captions personalizados con el show real
@@ -5700,9 +5753,14 @@ function openDetail(key, d) {
     const schedItems = [gd.time, gd.platforms, gd.desc].filter(Boolean);
     dpGrid.appendChild(makeBlock('Horario & Plataformas', 'var(--blue)', schedItems));
     {
-      const gdGoalsBlock = makeGoals(gd.goals, gd.prep || null, gd.title || null, date.getDay());
-      gdGoalsBlock.style.gridColumn = '1 / -1';
-      dpGrid.appendChild(gdGoalsBlock);
+      if (date.getDay() === 0 || gd.type === 'rest') {
+        // Domingo: descanso activo, sin goals de tokens
+        dpGrid.appendChild(makeRestTasks(gd.goals));
+      } else {
+        const gdGoalsBlock = makeGoals(gd.goals, gd.prep || null, gd.title || null, date.getDay());
+        gdGoalsBlock.style.gridColumn = '1 / -1';
+        dpGrid.appendChild(gdGoalsBlock);
+      }
     }
     // NUEVO: bloque unificado de plan de publicaciones (hora → plataforma → acción → caption)
     // Calcular nombres de shows de viernes y sábado de esta semana para los teasers
