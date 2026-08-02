@@ -5278,6 +5278,171 @@ const MONTH_GENERAL = {
         tipMenuPerm:[{name:'🎄 Christmas magic',price:'125'}], campanas:['Campaña navideña: temática festiva todo diciembre','Calendario de adviento: sorpresa diaria por goals','Preparar el gran show de Fin de Año'], contenido:['Sets navideños premium','Decoración festiva','Contenido de fin de año'] },
 };
 
+
+// ══════════════════════════════════════════════════════════════════
+// PLAN DE CONTENIDO MENSUAL — por plataforma y tipo (día 1)
+// ══════════════════════════════════════════════════════════════════
+// Guía ejecutable con contenido evergreen o preparable con anticipación.
+// NO depende de grabar durante el mes. Usa shows/temáticas que YA existen
+// en el cronograma. Lo que requiere grabación nueva se marca como opcional.
+// Leyenda:  ✓ = evergreen / ya listo    ○ = opcional (recomendación)
+function makeContentPlan(month, year) {
+  const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const g = (typeof MONTH_GENERAL !== 'undefined' && MONTH_GENERAL[month]) ? MONTH_GENERAL[month] : { tema:'', emoji:'📅' };
+
+  // Plan por plataforma. Cada ítem: { tipo, contenido, evergreen(bool) }
+  // El contenido referencia shows/temáticas que YA existen en el cronograma.
+  const plan = {
+    'Twitter/X': {
+      color: '#7ab0d0',
+      desc: 'Motor de tráfico. Reutiliza fotos de shows pasados y anuncios. Todo evergreen.',
+      items: [
+        { tipo: 'Anuncios de stream', contenido: 'Foto teaser del look del día (de tu biblioteca de fotos de shows ya hechos)', evergreen: true },
+        { tipo: 'Teasers', contenido: 'Fotos/clips cortos de shows pasados para promocionar viernes y sábado', evergreen: true },
+        { tipo: 'Going live', contenido: 'Aviso -30min con foto de archivo del show que toca hoy', evergreen: true },
+        { tipo: 'Engagement', contenido: 'Encuestas y preguntas de texto (sin foto) — domingos', evergreen: true },
+        { tipo: 'Video trailer', contenido: 'Clip de 10-15s tipo trailer para sábado premium (de un show grabado antes)', evergreen: true },
+        { tipo: 'Contenido fresco', contenido: 'Foto nueva del look de hoy tomada antes del stream', evergreen: false },
+      ]
+    },
+    'Instagram': {
+      color: '#e090b0',
+      desc: 'Máximo 1 feed/día. Prioriza calidad. Stories libres. Reutiliza tu mejor material.',
+      items: [
+        { tipo: 'Feed (1/día máx)', contenido: 'Tu mejor foto SFW de shows pasados, adaptada IG-safe', evergreen: true },
+        { tipo: 'Stories', contenido: 'Countdown, teasers y detrás de cámara de material existente', evergreen: true },
+        { tipo: 'Reels', contenido: 'Clips cortos IG-safe de shows ya grabados (jue-sáb)', evergreen: true },
+        { tipo: 'Highlights', contenido: 'Guardar teasers de viernes/sábado como highlights permanentes', evergreen: true },
+        { tipo: 'Reel nuevo temático', contenido: 'Grabar un reel específico de la temática del mes (' + (g.tema||'') + ')', evergreen: false },
+      ]
+    },
+    'OnlyFans': {
+      color: '#e8b870',
+      desc: 'Muro (retención) + PPV (venta). Reutiliza sets y grabaciones de shows pasados.',
+      items: [
+        { tipo: 'Muro — fotos', contenido: 'Sets de fotos de shows pasados (2-3 fotos por día entre semana)', evergreen: true },
+        { tipo: 'PPV — clips', contenido: 'Grabaciones de shows premium anteriores como PPV ($10-25)', evergreen: true },
+        { tipo: 'PPV — sets premium', contenido: 'Los mejores sets de fotos ya tomados, vendidos por DM', evergreen: true },
+        { tipo: 'Muro — teasers', contenido: 'Fotos teaser tras el sábado para quien no compró el PPV', evergreen: true },
+        { tipo: 'Set temático nuevo', contenido: 'Sesión de fotos con la temática del mes para contenido fresco', evergreen: false },
+      ]
+    },
+    'Fan Clubs (CB + SC)': {
+      color: '#e8a23a',
+      desc: 'DM directo a miembros. Entrega grabaciones de los shows de la semana. Todo evergreen.',
+      items: [
+        { tipo: 'Grabación sábado', contenido: 'DM de la grabación completa del show premium (domingos)', evergreen: true },
+        { tipo: 'Grabación semanal', contenido: 'DM de grabaciones de shows entre semana a miembros', evergreen: true },
+        { tipo: 'Acceso anticipado', contenido: 'Avisar a Fan Club de shows especiales antes que el público', evergreen: true },
+        { tipo: 'Contenido exclusivo', contenido: 'Clips cortos de archivo exclusivos para miembros', evergreen: true },
+      ]
+    },
+  };
+
+  // Tipos de contenido general del mes (sets, videos, promos) — de lo que ya existe
+  const contentTypes = {
+    fotos: {
+      titulo: 'Sesiones de fotos', emoji: '📸',
+      items: [
+        { txt: 'Usar biblioteca de sets ya tomados de shows pasados', evergreen: true },
+        { txt: 'Sets temáticos del cronograma: ' + (g.contenido ? g.contenido.join(', ') : 'temática del mes'), evergreen: false },
+      ]
+    },
+    videos: {
+      titulo: 'Videos y clips', emoji: '🎬',
+      items: [
+        { txt: 'Grabaciones de shows premium anteriores (para PPV y teasers)', evergreen: true },
+        { txt: 'Clips cortos IG-safe extraídos de shows ya grabados', evergreen: true },
+        { txt: 'Video trailer temático nuevo del mes (opcional)', evergreen: false },
+      ]
+    },
+    promos: {
+      titulo: 'Promociones', emoji: '🎯',
+      items: (g.campanas || []).map(c => ({ txt: c, evergreen: true }))
+    },
+  };
+
+  // ── Contenedor ──
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'grid-column:1/-1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:4px;';
+
+  const title = document.createElement('div');
+  title.style.cssText = 'font-family:var(--serif);font-size:20px;color:var(--gold);margin-bottom:3px;';
+  title.textContent = '📋 Plan de contenido de ' + monthNames[month];
+  wrap.appendChild(title);
+  const sub = document.createElement('div');
+  sub.style.cssText = 'font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:6px;';
+  sub.textContent = 'Guía completa por plataforma, lista para ejecutarse desde hoy con contenido que ya existe.';
+  wrap.appendChild(sub);
+
+  // Leyenda evergreen/opcional
+  const leg = document.createElement('div');
+  leg.style.cssText = 'display:flex;gap:16px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border);font-size:10.5px;';
+  leg.innerHTML =
+    '<span style="color:var(--green);">✓ Listo / evergreen (ya lo tienes)</span>' +
+    '<span style="color:var(--text3);">○ Opcional (recomendación, no requerido)</span>';
+  wrap.appendChild(leg);
+
+  const noteBox = document.createElement('div');
+  noteBox.style.cssText = 'background:rgba(122,176,120,.06);border-left:2px solid var(--green);border-radius:5px;padding:9px 12px;margin-bottom:18px;font-size:11px;color:var(--text2);line-height:1.5;';
+  noteBox.textContent = 'Todo lo marcado ✓ se ejecuta con material que ya tienes (shows grabados, sets de fotos, biblioteca existente). No necesitas grabar nada nuevo este mes para cumplir el plan. Lo marcado ○ es solo para refrescar si quieres.';
+  wrap.appendChild(noteBox);
+
+  const sectionTitle = (txt, emoji, color) => {
+    const t = document.createElement('div');
+    t.style.cssText = 'font-family:var(--mono);font-size:10px;color:' + (color||'var(--gold)') + ';text-transform:uppercase;letter-spacing:.1em;margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--border);';
+    t.textContent = (emoji?emoji+' ':'') + txt;
+    return t;
+  };
+
+  const renderItem = (tipo, contenido, evergreen, accent) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:grid;grid-template-columns:20px 130px 1fr;gap:10px;align-items:start;background:var(--bg3);border-radius:6px;padding:9px 12px;margin-bottom:5px;';
+    const mark = document.createElement('div');
+    mark.style.cssText = 'font-size:13px;color:' + (evergreen?'var(--green)':'var(--text3)') + ';font-weight:700;';
+    mark.textContent = evergreen ? '✓' : '○';
+    row.appendChild(mark);
+    if (tipo) {
+      const t = document.createElement('div');
+      t.style.cssText = 'font-family:var(--mono);font-size:10px;color:' + (accent||'var(--gold2)') + ';padding-top:1px;';
+      t.textContent = tipo;
+      row.appendChild(t);
+    } else {
+      const spacer = document.createElement('div'); row.appendChild(spacer);
+    }
+    const c = document.createElement('div');
+    c.style.cssText = 'font-size:12px;color:var(--text2);line-height:1.45;';
+    c.textContent = contenido;
+    row.appendChild(c);
+    return row;
+  };
+
+  // ── Por plataforma ──
+  Object.entries(plan).forEach(([platName, platData]) => {
+    wrap.appendChild(sectionTitle(platName, '', platData.color));
+    const d = document.createElement('div');
+    d.style.cssText = 'font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.5;font-style:italic;';
+    d.textContent = platData.desc;
+    wrap.appendChild(d);
+    platData.items.forEach(it => wrap.appendChild(renderItem(it.tipo, it.contenido, it.evergreen, platData.color)));
+  });
+
+  // ── Por tipo de contenido ──
+  const ctTitle = document.createElement('div');
+  ctTitle.style.cssText = 'font-family:var(--serif);font-size:16px;color:var(--gold);margin:24px 0 4px;padding-top:16px;border-top:1px solid var(--border);';
+  ctTitle.textContent = 'Por tipo de contenido';
+  wrap.appendChild(ctTitle);
+
+  Object.values(contentTypes).forEach(ct => {
+    if (!ct.items || !ct.items.length) return;
+    wrap.appendChild(sectionTitle(ct.titulo, ct.emoji));
+    ct.items.forEach(it => wrap.appendChild(renderItem(null, it.txt, it.evergreen)));
+  });
+
+  return wrap;
+}
+
+
 function makeMonthlyPrep(month, year) {
   const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const g = MONTH_GENERAL[month] || MONTH_GENERAL[0];
@@ -5552,6 +5717,7 @@ function openDetail(key, d) {
   // Día 1 del mes: mostrar bloque de Preparación Mensual al inicio
   if (d === 1) {
     dpGrid.appendChild(makeMonthlyPrep(calM, calY));
+    dpGrid.appendChild(makeContentPlan(calM, calY));
   }
 
 
