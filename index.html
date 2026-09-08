@@ -7387,41 +7387,103 @@ function anzParseCB(text) {
   let privadoTimestamps = new Set();
   let spyTokens = 0;
   let spyCount = 0;
+  let privadoTipsExtra = 0;
 
-  for (const e of entries) {
+  // Detectar propinas DENTRO del privado: una "Propina de: USER" cuenta como
+  // propina-en-privado si ocurre mientras hay un privado activo del mismo usuario.
+  // Para eso, primero marcamos qué entradas son privado y de quién (orden cronológico).
+  const chrono = entries.slice().reverse(); // oldest first
+  const enPrivadoFlag = new Map(); // index en chrono -> bool (propina dentro de privado)
+  {
+    let activePrivUser = null;
+    for (let idx = 0; idx < chrono.length; idx++) {
+      const e = chrono[idx];
+      if (e.tokens <= 0) continue;
+      const a = e.action.toLowerCase();
+      const esPrivTiempo = (a.includes('show privado') || a.includes('emisión prémium privada')
+        || a.includes('emisión privada') || (a.includes('privad') && !a.includes('propina') && !a.includes('espía') && !a.includes('espia') && !a.includes('spy')));
+      const esEspia = a.includes('espía') || a.includes('espia') || a.includes('spy');
+      const esPropina = a.includes('propina');
+      const um = e.action.match(/:\s*(.+)/);
+      const evUser = um ? um[1].trim() : 'Anónimo';
+      if (esPrivTiempo && !esEspia) {
+        activePrivUser = evUser;
+      } else if (esPropina && activePrivUser && evUser === activePrivUser) {
+        enPrivadoFlag.set(idx, true); // propina dentro del privado activo
+      } else if (!esEspia) {
+        // cualquier otro evento (que no sea espía) cierra el privado
+        activePrivUser = null;
+      }
+    }
+  }
+
+  for (let idx = 0; idx < chrono.length; idx++) {
+    const e = chrono[idx];
     if (e.tokens <= 0) continue;
     const a = e.action.toLowerCase();
 
-    if (a.includes('emisión prémium privada') || a.includes('privada')) {
-      privadoTokens += e.tokens;
-      // Track unique timestamps to count real minutes (CB can log 6 entries/min for exclusive)
-      if (!privadoTimestamps) privadoTimestamps = new Set();
-      privadoTimestamps.add(e.date);
-      // Extract username
-      const m = e.action.match(/:\s*(.+)/);
-      const user = m ? m[1].trim() : 'Anónimo';
-      tippers[user] = (tippers[user] || 0) + e.tokens;
-      cats['Privado'] = (cats['Privado'] || 0) + e.tokens;
-    } else if (a.includes('spy')) {
+    // Emisión espía (español) o spy (inglés) — otro usuario espía el privado
+    if (a.includes('espía') || a.includes('espia') || a.includes('spy')) {
       spyTokens += e.tokens;
       spyCount++;
-      cats['Spy Show'] = (cats['Spy Show'] || 0) + e.tokens;
-    } else if (a.includes('propina')) {
+      cats['Emisión espía'] = (cats['Emisión espía'] || 0) + e.tokens;
+      // Nota: el espía no se suma al ranking de tippers (no es propina directa)
+    }
+    // Show privado / privado (tiempo del privado)
+    else if (a.includes('show privado') || a.includes('emisión prémium privada')
+             || a.includes('emisión privada')
+             || (a.includes('privad') && !a.includes('propina'))) {
+      privadoTokens += e.tokens;
+      privadoTimestamps.add(e.date);
+      cats['Privado'] = (cats['Privado'] || 0) + e.tokens;
+      // Nota: el tiempo del privado NO se suma al ranking de tippers
+      // (es el pago del show, no una propina). Las propinas del usuario
+      // durante el privado sí se cuentan en su categoría aparte.
+    }
+    // Propina — puede ser pública o DENTRO del privado
+    else if (a.includes('propina')) {
       const m = e.action.match(/de:\s*(.+)/i);
       const user = m ? m[1].trim() : 'Anónimo';
-      tippers[user] = (tippers[user] || 0) + e.tokens;
-      cats['Propinas'] = (cats['Propinas'] || 0) + e.tokens;
-    } else if (a.includes('goal') || a.includes('objetivo')) {
+      if (user && user !== 'Anónimo') tippers[user] = (tippers[user] || 0) + e.tokens;
+      if (enPrivadoFlag.get(idx)) {
+        // propina dada durante el privado
+        privadoTipsExtra += e.tokens;
+        cats['Propina en privado'] = (cats['Propina en privado'] || 0) + e.tokens;
+      } else {
+        cats['Propinas'] = (cats['Propinas'] || 0) + e.tokens;
+      }
+    }
+    else if (a.includes('goal') || a.includes('objetivo')) {
       cats['Goals'] = (cats['Goals'] || 0) + e.tokens;
-    } else if (a.includes('fan club') || a.includes('suscripción')) {
+    }
+    else if (a.includes('fan club') || a.includes('suscripción')) {
       cats['Fan Club'] = (cats['Fan Club'] || 0) + e.tokens;
-    } else {
+    }
+    else {
       cats['Otros'] = (cats['Otros'] || 0) + e.tokens;
     }
   }
 
-  // Count private MINUTES = unique timestamps (CB logs multiple entries/min for high rates)
-  const privMinutos = privadoTimestamps.size;
+  // Duración del privado en minutos.
+  // CB registra la hora con precisión de minuto y suele loguear varias entradas
+  // por minuto. Contamos los MINUTOS ÚNICOS (marcas de tiempo distintas).
+  // Si por el formato todas cayeran en el mismo minuto pero hay muchas entradas,
+  // estimamos por cantidad de entradas (CB ~6 fracciones/min como piso).
+  let privadoEntradas = 0;
+  for (const e of entries) {
+    if (e.tokens <= 0) continue;
+    const aa = e.action.toLowerCase();
+    const esP = (aa.includes('show privado') || aa.includes('emisión prémium privada')
+      || aa.includes('emisión privada') || (aa.includes('privad') && !aa.includes('propina')))
+      && !(aa.includes('espía') || aa.includes('espia') || aa.includes('spy'));
+    if (esP) privadoEntradas++;
+  }
+  let privMinutos = privadoTimestamps.size;
+  // Si las marcas de tiempo no dan granularidad (1 min) pero hay muchas entradas,
+  // estimamos con 6 entradas/min (comportamiento típico de CB en privados).
+  if (privMinutos <= 1 && privadoEntradas > 6) {
+    privMinutos = Math.max(1, Math.round(privadoEntradas / 6));
+  }
 
   // Count SESSIONS: consecutive private entries by the same user = 1 session.
   // A tip "Propina de: USER" during an active private does NOT break it (same user).
@@ -7432,8 +7494,11 @@ function anzParseCB(text) {
   for (const e of entries.slice().reverse()) { // oldest first
     if (e.tokens <= 0) continue;
     const a = e.action.toLowerCase();
-    const isPriv = a.includes('emisión prémium privada') || a.includes('privada');
-    // Extract user from this entry (works for both "privada: x" and "de: x")
+    const esEspia = a.includes('espía') || a.includes('espia') || a.includes('spy');
+    // Privado = show privado / privada / emisión privada (NO espía, NO propina)
+    const isPriv = (a.includes('show privado') || a.includes('emisión prémium privada')
+      || a.includes('emisión privada') || (a.includes('privad') && !a.includes('propina')))
+      && !esEspia;
     const um = e.action.match(/:\s*(.+)/);
     const evUser = um ? um[1].trim() : 'Anónimo';
     const isTip = a.includes('propina');
@@ -7443,7 +7508,9 @@ function anzParseCB(text) {
       inPriv = true;
       lastPrivUser = evUser;
     } else if (isTip && inPriv && evUser === lastPrivUser) {
-      // tip during active private by same user — session continues
+      // propina durante el privado activo del mismo usuario — la sesión continúa
+    } else if (esEspia) {
+      // una emisión espía no rompe el privado activo
     } else {
       inPriv = false;
       lastPrivUser = null;
@@ -7466,7 +7533,9 @@ function anzParseCB(text) {
     privadoTokens,
     privadoMinutos: privMinutos,
     privadoSesiones: sessions,
+    privadoTipsExtra,
     spyTokens,
+    spyCount,
     totalEntries: entries.filter(e=>e.tokens>0).length
   };
 }
@@ -7488,7 +7557,7 @@ function anzParseSC(text) {
       const fecha = parts[1].trim();
       const tipo = parts[2].trim();
       const tokens = parseInt(parts[3].replace(/[\s\u00a0,]/g, '')) || 0;
-      if (tokens > 0) entries.push({ user, fecha, tipo, tokens });
+      if (tokens !== 0) entries.push({ user, fecha, tipo, tokens });
     }
   }
 
@@ -7502,7 +7571,8 @@ function anzParseSC(text) {
     });
     const dateRe = /^\d{1,2} de \w+ de \d{4}\s+\d{1,2}:\d{2}$/i;
     const tokenRe = /^-?[\d\s\u00a0,]+$/;
-    const isToken = (s) => tokenRe.test(s) && parseInt(s.replace(/[\s\u00a0,]/g,'')) > 0;
+    // Aceptar también negativos (autorreembolsos) — cualquier número distinto de 0
+    const isToken = (s) => tokenRe.test(s) && parseInt(s.replace(/[\s\u00a0,]/g,'')) !== 0;
     let i = 0;
     while (i < ls.length) {
       if (dateRe.test(ls[i]) && i >= 1) {
@@ -7517,7 +7587,7 @@ function anzParseSC(text) {
           tokens = parseInt(ls[j].replace(/[\s\u00a0,]/g,'')) || 0;
           j++;
         }
-        if (tokens > 0 && tipo) entries.push({ user, fecha, tipo, tokens });
+        if (tokens !== 0 && tipo) entries.push({ user, fecha, tipo, tokens });
         i = j;
       } else {
         i++;
@@ -7540,7 +7610,7 @@ function anzParseSC(text) {
   const privTypes = {
     'privado exclusivo':  { tokens: 0, count: 0, rate: 60 },
     'privado regular':    { tokens: 0, count: 0, rate: 32 },
-    'show privado':       { tokens: 0, count: 0, rate: 30 },
+    'show privado':       { tokens: 0, count: 0, rate: 44 },
     'privado':            { tokens: 0, count: 0, rate: 32 }, // fallback
   };
 
@@ -7552,8 +7622,10 @@ function anzParseSC(text) {
 
     if (t.includes('ticket')) {
       cats[e.tipo] = (cats[e.tipo] || 0) + e.tokens;
-      ticketTokens += e.tokens;
-      ticketCount++;
+      ticketTokens += e.tokens;  // neto: los reembolsos (negativos) se restan solos
+      // "Entradas vendidas" cuenta solo ventas reales (positivas), no reembolsos
+      const esReembolso = t.includes('reembolso') || t.includes('cancel') || e.tokens < 0;
+      if (!esReembolso) { ticketCount++; }
     } else if (t === 'privado exclusivo' || t.includes('exclusivo')) {
       // Cada entrada = 1 minuto a la tarifa base (60). El exceso es propina, no tiempo.
       const rate = privTypes['privado exclusivo'].rate;
@@ -7566,8 +7638,8 @@ function anzParseSC(text) {
         privTipsExtra += extra;                            // exceso = propina
         cats['Propina en privado'] = (cats['Propina en privado'] || 0) + extra;
       }
-    } else if (t === 'show privado' || t === 'privado regular' || (t.includes('privado') && !t.includes('propina'))) {
-      // Only count as time-based if it's NOT "propina privada"
+    } else if ((t === 'show privado' || t === 'privado regular' || (t.includes('privado') && !t.includes('propina'))) && !t.includes('espía') && !t.includes('espia')) {
+      // Only count as time-based if it's NOT "propina privada" and NOT "modo espía"
       const key = t.includes('show') ? 'show privado' : 'privado regular';
       const rate = privTypes[key].rate;
       privTypes[key].tokens += rate;       // solo el tiempo
@@ -7618,9 +7690,10 @@ function anzParseSC(text) {
   let lastUser = null;
   for (const e of entries.slice().reverse()) {  // oldest first
     const t = e.tipo.toLowerCase();
-    const isPrivTime = (t === 'privado exclusivo' || t.includes('exclusivo'))
+    const isPrivTime = ((t === 'privado exclusivo' || t.includes('exclusivo'))
       || (t === 'show privado' || t === 'privado regular')
-      || (t.includes('privado') && !t.includes('propina'));
+      || (t.includes('privado') && !t.includes('propina')))
+      && !t.includes('espía') && !t.includes('espia');
     // A private-tip ("propina de show privado", "propina privada") sustains the current session
     const isPrivTip = t.includes('propina') && (t.includes('privad') || t.includes('show privado'));
 
@@ -7693,7 +7766,8 @@ function anzRenderCB(r) {
     kpiCard('Tokens ganados', r.tokensGanados.toLocaleString('es') + ' tk', `${r.balanceFinal.toLocaleString('es')} − ${r.balanceInicialAjustado.toLocaleString('es')} = ${r.tokensGanados.toLocaleString('es')} tk`, 'var(--gold)'),
     kpiCard('Privados', r.privadoTokens.toLocaleString('es') + ' tk', `${r.privadoSesiones} sesión(es) · ${r.privadoMinutos} min · ${Math.floor(r.privadoMinutos/60)}h ${r.privadoMinutos%60}min`, 'var(--cb)'),
     kpiCard('Propinas públicas', ((r.cats['Propinas']||0)).toLocaleString('es') + ' tk', 'tips directos en chat', 'var(--text)'),
-    r.spyTokens > 0 ? kpiCard('Spy Show', r.spyTokens.toLocaleString('es') + ' tk', `${r.spyCount} entradas`, 'var(--purple)') : '',
+    r.spyTokens > 0 ? kpiCard('Emisión espía', r.spyTokens.toLocaleString('es') + ' tk', `${r.spyCount} entradas de espías`, 'var(--purple)') : '',
+    (r.privadoTipsExtra > 0) ? kpiCard('Propinas en privado', r.privadoTipsExtra.toLocaleString('es') + ' tk', 'propinas durante el show privado', 'var(--rose)') : '',
   ].join('');
 
   // Categories table
@@ -7705,7 +7779,7 @@ function anzRenderCB(r) {
 
   // Detect private type from rate: 60 tk/min = exclusivo, 30 tk/min = regular
   const cbPrivRate = r.privadoMinutos > 0 ? Math.round(r.privadoTokens / r.privadoMinutos) : 0;
-  const cbPrivTipo = cbPrivRate >= 55 ? 'Exclusivo — 60 tk/min' : cbPrivRate >= 28 ? 'Regular — 30 tk/min' : `~${cbPrivRate} tk/min`;
+  const cbPrivTipo = `${cbPrivRate} tk/min aprox.`;
 
   // Private detail
   const privDetail = r.privadoMinutos > 0 ? `
@@ -7717,7 +7791,9 @@ function anzRenderCB(r) {
         <div class="anz-priv-item"><div class="anz-priv-label">En formato hora</div><div class="anz-priv-val" style="color:var(--gold)">${Math.floor(r.privadoMinutos/60)}h ${r.privadoMinutos%60}min</div></div>
         <div class="anz-priv-item"><div class="anz-priv-label">Sesiones</div><div class="anz-priv-val">${r.privadoSesiones}</div></div>
         <div class="anz-priv-item"><div class="anz-priv-label">Tipo detectado</div><div class="anz-priv-val" style="color:var(--gold2)">${cbPrivTipo}</div></div>
+        ${r.privadoTipsExtra > 0 ? `<div class="anz-priv-item"><div class="anz-priv-label">Propinas en privado</div><div class="anz-priv-val" style="color:var(--rose)">+${r.privadoTipsExtra.toLocaleString('es')} tk</div></div>` : ''}
       </div>
+      ${r.privadoTipsExtra > 0 ? '<div style="font-size:10px;color:var(--text3);margin-top:8px;">Nota: las propinas dadas durante el privado se cuentan aparte del tiempo.</div>' : ''}
     </div>` : '';
 
   // Top tippers
