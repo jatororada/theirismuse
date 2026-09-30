@@ -100,3 +100,21 @@ self.addEventListener('fetch', function(event) {
     fetch(req).catch(function() { return caches.match(req); })
   );
 });
+
+// ══════════════════════════════════════════════════════════════════
+// NOTIFICACIONES — manejar clic (abrir la app en el cronograma)
+// ══════════════════════════════════════════════════════════════════
+self.addEventListener('notificationclick', function(event) {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+      // Si hay una ventana abierta, enfocarla
+      for (var i = 0; i < clientList.length; i++) {
+        var client = clientList[i];
+        if ('focus' in client) return client.focus();
+      }
+      // Si no, abrir una nueva
+      if (self.clients.openWindow) return self.clients.openWindow('./');
+    })
+  );
+});
