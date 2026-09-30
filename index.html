@@ -679,6 +679,17 @@ p strong{color:var(--text);font-weight:500;}
   <h1 class="page-title">Cronograma<br><em>31 días ejecutables</em></h1>
   <p>Haz clic en cualquier día para ver el plan detallado.</p>
 
+  <!-- Panel de notificaciones del plan de hoy -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
+    <div style="flex:1;min-width:200px;">
+      <div style="font-family:var(--serif);font-size:15px;color:var(--gold);margin-bottom:3px;">🔔 Recordatorios del plan de hoy</div>
+      <div id="notif-status" style="font-size:11px;color:var(--text3);line-height:1.5;">Recibe un aviso 5 min antes de cada publicación, aunque la app esté cerrada (con la PWA instalada).</div>
+    </div>
+    <button id="notif-toggle-btn" onclick="notifToggle()" style="display:flex;align-items:center;gap:7px;background:rgba(200,146,26,.12);border:1px solid var(--gold);color:var(--gold);border-radius:8px;padding:10px 16px;font-size:12px;font-family:var(--sans);cursor:pointer;white-space:nowrap;transition:all .15s;">
+      <span style="font-size:14px;">🔕</span> Activar notificaciones
+    </button>
+  </div>
+
   <div class="cal-controls">
     <div><div class="cal-month-name" id="calMonthName">—</div><div class="cal-year-lbl" id="calYearLbl">—</div></div>
     <div class="cal-ctrl-right">
@@ -4706,6 +4717,203 @@ function makeGoals(goals, materials, showTitle, wd) {
 // plat: 'tw' | 'ig' | 'of' | 'cbfc' | 'scfc'
 // Principios: IG máx 1 feed/día · días suaves mínimos · contenido
 // reutilizado separado 2-3h · sin dos posts misma red misma hora.
+
+// ══════════════════════════════════════════════════════════════════
+// NOTIFICACIONES DEL PLAN DE HOY — recordatorios 5 min antes
+// ══════════════════════════════════════════════════════════════════
+// Programa notificaciones locales del sistema para cada publicación
+// del plan de hoy, 5 minutos antes de su hora. Funciona con la PWA
+// instalada. Se reprograman cada día al abrir la app.
+const NOTIF_LEAD_MIN = 5; // minutos antes de cada publicación
+
+// Convierte "11:00am" / "2:30pm" a un Date de HOY
+function notifParseHora(horaStr) {
+  const m = horaStr.match(/(\d+):(\d+)\s*(am|pm)/i);
+  if (!m) return null;
+  let hh = parseInt(m[1]), mm = parseInt(m[2]);
+  const ap = m[3].toLowerCase();
+  if (ap === 'pm' && hh !== 12) hh += 12;
+  if (ap === 'am' && hh === 12) hh = 0;
+  const d = new Date();
+  d.setHours(hh, mm, 0, 0);
+  return d;
+}
+
+// Nombre legible de plataforma para la notificación
+function notifPlatName(plat) {
+  return ({ tw:'Twitter/X', ig:'Instagram', of:'OnlyFans', cbfc:'Fan Club CB', scfc:'Fan Club SC' })[plat] || 'Publicación';
+}
+
+// Estado de notificaciones (persistente)
+function notifGetEnabled() {
+  try { return _store.getItem('tm_notif_enabled') === '1'; } catch(e) { return false; }
+}
+function notifSetEnabled(v) {
+  try { _store.setItem('tm_notif_enabled', v ? '1' : '0'); } catch(e) {}
+}
+
+// Timers activos en esta sesión (para no duplicar)
+let _notifTimers = [];
+
+// Programa todas las notificaciones del plan de hoy
+function notifScheduleToday() {
+  // Limpiar timers previos de esta sesión
+  _notifTimers.forEach(t => clearTimeout(t));
+  _notifTimers = [];
+
+  if (!notifGetEnabled()) return { scheduled: 0, reason: 'disabled' };
+  if (!('Notification' in window) || Notification.permission !== 'granted') {
+    return { scheduled: 0, reason: 'no-permission' };
+  }
+
+  const now = new Date();
+  const wd = now.getDay();
+
+  // Obtener el plan de hoy con los nombres de show correctos
+  let friShow = '', satShow = '';
+  try {
+    const y = now.getFullYear(), mo = now.getMonth(), da = now.getDate();
+    const friD = da + (5 - wd), satD = da + (6 - wd);
+    const friKey = y+'-'+String(mo+1).padStart(2,'0')+'-'+String(friD).padStart(2,'0');
+    const satKey = y+'-'+String(mo+1).padStart(2,'0')+'-'+String(satD).padStart(2,'0');
+    const friDoy = mo*31 + friD, satDoy = mo*31 + satD;
+    friShow = (DAY_DB[friKey] && DAY_DB[friKey].title) ? DAY_DB[friKey].title : pickPoolShow(5, friDoy, y, mo, friD).show;
+    satShow = (DAY_DB[satKey] && DAY_DB[satKey].title) ? DAY_DB[satKey].title : pickPoolShow(6, satDoy, y, mo, satD).show;
+  } catch(e) {}
+
+  // Nombre del show de hoy
+  let todayShow = 'el show de hoy';
+  try {
+    const y = now.getFullYear(), mo = now.getMonth(), da = now.getDate();
+    const key = y+'-'+String(mo+1).padStart(2,'0')+'-'+String(da).padStart(2,'0');
+    const doy = mo*31 + da;
+    todayShow = (DAY_DB[key] && DAY_DB[key].title) ? DAY_DB[key].title : (wd===0 ? 'Descanso' : pickPoolShow(wd, doy, y, mo, da).show);
+  } catch(e) {}
+
+  const plan = buildDayPlan(wd, todayShow, friShow, satShow);
+  if (!plan || !plan.acciones) return { scheduled: 0, reason: 'no-plan' };
+
+  // Registro de lo ya notificado hoy (para no repetir al reabrir)
+  const todayTag = now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate();
+  let sentLog = {};
+  try { const raw = _store.getItem('tm_notif_sent_' + todayTag); if (raw) sentLog = JSON.parse(raw); } catch(e) {}
+
+  let scheduled = 0;
+  plan.acciones.forEach((a, idx) => {
+    const horaDate = notifParseHora(a.hora);
+    if (!horaDate) return;
+
+    // Momento de la notificación = hora de publicación − lead
+    const notifTime = new Date(horaDate.getTime() - NOTIF_LEAD_MIN * 60000);
+    const delay = notifTime.getTime() - now.getTime();
+
+    const sentKey = a.hora + '|' + a.plat;
+    if (sentLog[sentKey]) return; // ya notificado hoy
+
+    // Solo programar futuras (con margen de 1s)
+    if (delay < 1000) return;
+
+    const title = 'En ' + NOTIF_LEAD_MIN + ' min · ' + notifPlatName(a.plat);
+    const body = a.accion + (a.caption ? '\n\n📋 ' + a.caption.split('\n')[0] : '');
+
+    const timer = setTimeout(() => {
+      notifShow(title, body, a);
+      // Marcar como enviado
+      sentLog[sentKey] = true;
+      try { _store.setItem('tm_notif_sent_' + todayTag, JSON.stringify(sentLog)); } catch(e) {}
+    }, delay);
+
+    _notifTimers.push(timer);
+    scheduled++;
+  });
+
+  return { scheduled, total: plan.acciones.length };
+}
+
+// Muestra una notificación (vía service worker si está disponible, si no directo)
+function notifShow(title, body, accion) {
+  const opts = {
+    body: body,
+    icon: './icon-192.png',
+    badge: './icon-192.png',
+    tag: 'tm-plan-' + (accion ? accion.hora : Date.now()),
+    requireInteraction: false,
+    vibrate: [200, 100, 200],
+    data: accion || {}
+  };
+  if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
+    navigator.serviceWorker.ready.then(reg => {
+      reg.showNotification(title, opts).catch(() => {
+        try { new Notification(title, opts); } catch(e) {}
+      });
+    });
+  } else {
+    try { new Notification(title, opts); } catch(e) {}
+  }
+}
+
+// Activa/pide permiso de notificaciones
+async function notifToggle() {
+  if (!('Notification' in window)) {
+    alert('Tu navegador no soporta notificaciones.');
+    return;
+  }
+
+  if (notifGetEnabled()) {
+    // Desactivar
+    notifSetEnabled(false);
+    _notifTimers.forEach(t => clearTimeout(t));
+    _notifTimers = [];
+    notifUpdateButton();
+    return;
+  }
+
+  // Activar: pedir permiso
+  let perm = Notification.permission;
+  if (perm !== 'granted') {
+    perm = await Notification.requestPermission();
+  }
+  if (perm !== 'granted') {
+    alert('Necesitas permitir las notificaciones en tu navegador para recibir los recordatorios.\n\nSi las bloqueaste antes, actívalas desde el candado 🔒 en la barra de direcciones.');
+    return;
+  }
+
+  notifSetEnabled(true);
+  const res = notifScheduleToday();
+  notifUpdateButton();
+
+  // Notificación de confirmación
+  notifShow('🔔 Notificaciones activadas',
+    'Te avisaré ' + NOTIF_LEAD_MIN + ' min antes de cada publicación de hoy. (' + res.scheduled + ' programadas)',
+    null);
+}
+
+// Actualiza el texto/estado del botón
+function notifUpdateButton() {
+  const btn = document.getElementById('notif-toggle-btn');
+  if (!btn) return;
+  const on = notifGetEnabled();
+  btn.innerHTML = on
+    ? '<span style="font-size:14px;">🔔</span> Notificaciones activas'
+    : '<span style="font-size:14px;">🔕</span> Activar notificaciones';
+  btn.style.background = on ? 'rgba(122,176,120,.15)' : 'rgba(200,146,26,.12)';
+  btn.style.borderColor = on ? 'var(--green)' : 'var(--gold)';
+  btn.style.color = on ? 'var(--green)' : 'var(--gold)';
+
+  const status = document.getElementById('notif-status');
+  if (status) {
+    if (on) {
+      const res = notifScheduleToday();
+      status.textContent = res.scheduled > 0
+        ? res.scheduled + ' recordatorio(s) programado(s) para hoy · 5 min antes de cada uno'
+        : 'No quedan publicaciones pendientes por hoy. Mañana se reprograman.';
+    } else {
+      status.textContent = 'Recibe un aviso 5 min antes de cada publicación, aunque la app esté cerrada (con la PWA instalada).';
+    }
+  }
+}
+
+
 function buildDayPlan(wd, show, nextFri, nextSat) {
   show = show || 'el show de hoy';
   nextFri = nextFri || 'el show del viernes';
@@ -5999,6 +6207,30 @@ function openDetail(key, d) {
 document.getElementById('calPrev').onclick=()=>{calM--;if(calM<0){calM=11;calY--;}renderCal();document.getElementById('detailPanel').style.display='none';};
 document.getElementById('calNext').onclick=()=>{calM++;if(calM>11){calM=0;calY++;}renderCal();document.getElementById('detailPanel').style.display='none';};
 document.getElementById('calToday').onclick=()=>{const n=new Date();calY=n.getFullYear();calM=n.getMonth();renderCal();document.getElementById('detailPanel').style.display='none';};
+
+// ── Inicialización de notificaciones del plan de hoy ──
+(function initNotifs() {
+  function run() {
+    try {
+      notifUpdateButton();
+      // Si ya estaban activadas, reprogramar las de hoy
+      if (typeof notifGetEnabled === 'function' && notifGetEnabled()) {
+        notifScheduleToday();
+      }
+    } catch(e) { console.log('notif init:', e); }
+  }
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(run, 500);
+  } else {
+    window.addEventListener('load', () => setTimeout(run, 500));
+  }
+  // Reprogramar si la app vuelve a primer plano (nuevo día, etc.)
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && typeof notifGetEnabled === 'function' && notifGetEnabled()) {
+      try { notifScheduleToday(); notifUpdateButton(); } catch(e) {}
+    }
+  });
+})();
 
 
 // ══════════════════════════════════════════
