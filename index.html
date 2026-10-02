@@ -4798,36 +4798,85 @@ function notifScheduleToday() {
   let sentLog = {};
   try { const raw = _store.getItem('tm_notif_sent_' + todayTag); if (raw) sentLog = JSON.parse(raw); } catch(e) {}
 
+  // Construir la COLA de notificaciones pendientes y guardarla en storage.
+  // Esto permite que un chequeo periódico las dispare aunque los setTimeout
+  // mueran al cerrarse la app.
+  const queue = [];
   let scheduled = 0;
-  plan.acciones.forEach((a, idx) => {
+  plan.acciones.forEach((a) => {
     const horaDate = notifParseHora(a.hora);
     if (!horaDate) return;
-
-    // Momento de la notificación = hora de publicación − lead
     const notifTime = new Date(horaDate.getTime() - NOTIF_LEAD_MIN * 60000);
-    const delay = notifTime.getTime() - now.getTime();
-
     const sentKey = a.hora + '|' + a.plat;
     if (sentLog[sentKey]) return; // ya notificado hoy
-
-    // Solo programar futuras (con margen de 1s)
-    if (delay < 1000) return;
 
     const title = 'En ' + NOTIF_LEAD_MIN + ' min · ' + notifPlatName(a.plat);
     const body = a.accion + (a.caption ? '\n\n📋 ' + a.caption.split('\n')[0] : '');
 
-    const timer = setTimeout(() => {
-      notifShow(title, body, a);
-      // Marcar como enviado
-      sentLog[sentKey] = true;
-      try { _store.setItem('tm_notif_sent_' + todayTag, JSON.stringify(sentLog)); } catch(e) {}
-    }, delay);
+    queue.push({
+      key: sentKey,
+      fireAt: notifTime.getTime(),
+      pubHora: a.hora,
+      title: title,
+      body: body
+    });
 
-    _notifTimers.push(timer);
-    scheduled++;
+    const delay = notifTime.getTime() - now.getTime();
+    // setTimeout como respaldo rápido SOLO si falta poco y la app está abierta
+    if (delay >= 1000) {
+      const timer = setTimeout(() => { notifFirePending(); }, delay + 500);
+      _notifTimers.push(timer);
+      scheduled++;
+    }
   });
 
-  return { scheduled, total: plan.acciones.length };
+  // Guardar la cola del día en storage
+  try {
+    _store.setItem('tm_notif_queue', JSON.stringify({ tag: todayTag, queue: queue }));
+  } catch(e) {}
+
+  // Disparar de inmediato cualquiera ya vencida (por si se abrió tarde)
+  notifFirePending();
+
+  return { scheduled: queue.length, total: plan.acciones.length };
+}
+
+// Revisa la cola guardada y dispara las notificaciones vencidas
+function notifFirePending() {
+  if (!notifGetEnabled()) return;
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+  let data = null;
+  try { const raw = _store.getItem('tm_notif_queue'); if (raw) data = JSON.parse(raw); } catch(e) {}
+  if (!data || !data.queue) return;
+
+  const now = Date.now();
+  const todayTag = (new Date()).getFullYear()+'-'+((new Date()).getMonth()+1)+'-'+(new Date()).getDate();
+
+  // Si la cola es de otro día, ignorar (se reprograma al abrir)
+  if (data.tag !== todayTag) return;
+
+  let sentLog = {};
+  try { const raw = _store.getItem('tm_notif_sent_' + todayTag); if (raw) sentLog = JSON.parse(raw); } catch(e) {}
+
+  let changed = false;
+  data.queue.forEach(item => {
+    if (sentLog[item.key]) return; // ya enviada
+    // Disparar si ya venció (con ventana de hasta 15 min de atraso para no perder avisos)
+    if (now >= item.fireAt && now - item.fireAt < 15 * 60000) {
+      notifShow(item.title, item.body, { hora: item.pubHora });
+      sentLog[item.key] = true;
+      changed = true;
+    } else if (now >= item.fireAt) {
+      // Muy atrasada (>15min): marcar como enviada sin mostrar (evita spam viejo)
+      sentLog[item.key] = true;
+      changed = true;
+    }
+  });
+
+  if (changed) {
+    try { _store.setItem('tm_notif_sent_' + todayTag, JSON.stringify(sentLog)); } catch(e) {}
+  }
 }
 
 // Muestra una notificación (vía service worker si está disponible, si no directo)
@@ -5060,6 +5109,20 @@ function buildDayPlan(wd, show, nextFri, nextSat) {
 // Render del plan unificado del día — hora → plataforma → acción → caption
 function makeUnifiedPlan(wd, show, nextFri, nextSat) {
   const plan = buildDayPlan(wd, show, nextFri, nextSat);
+
+  // Ordenar las acciones por hora cronológicamente (evita desorden al mover posts)
+  const _horaAMin = (h) => {
+    const m = String(h).match(/(\d+):(\d+)\s*(am|pm)/i);
+    if (!m) return 9999;
+    let hh = parseInt(m[1]), mm = parseInt(m[2]);
+    const ap = m[3].toLowerCase();
+    if (ap === 'pm' && hh !== 12) hh += 12;
+    if (ap === 'am' && hh === 12) hh = 0;
+    return hh * 60 + mm;
+  };
+  if (plan && plan.acciones) {
+    plan.acciones = plan.acciones.slice().sort((a, b) => _horaAMin(a.hora) - _horaAMin(b.hora));
+  }
 
   const platMeta = {
     'tw':   { label: '𝕏',     color:'#7ab0d0', bg:'rgba(58,106,138,.15)', name:'Twitter/X' },
@@ -6210,11 +6273,14 @@ document.getElementById('calToday').onclick=()=>{const n=new Date();calY=n.getFu
 
 // ── Inicialización de notificaciones del plan de hoy ──
 (function initNotifs() {
+  let _lastDayTag = null;
+  function dayTag() { const n=new Date(); return n.getFullYear()+'-'+(n.getMonth()+1)+'-'+n.getDate(); }
+
   function run() {
     try {
       notifUpdateButton();
-      // Si ya estaban activadas, reprogramar las de hoy
       if (typeof notifGetEnabled === 'function' && notifGetEnabled()) {
+        _lastDayTag = dayTag();
         notifScheduleToday();
       }
     } catch(e) { console.log('notif init:', e); }
@@ -6224,12 +6290,50 @@ document.getElementById('calToday').onclick=()=>{const n=new Date();calY=n.getFu
   } else {
     window.addEventListener('load', () => setTimeout(run, 500));
   }
-  // Reprogramar si la app vuelve a primer plano (nuevo día, etc.)
+
+  // Reprogramar si la app vuelve a primer plano (y reprogramar si cambió el día)
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden && typeof notifGetEnabled === 'function' && notifGetEnabled()) {
-      try { notifScheduleToday(); notifUpdateButton(); } catch(e) {}
+      try {
+        // Si cambió el día, reprogramar todo; si no, solo disparar pendientes
+        if (dayTag() !== _lastDayTag) { _lastDayTag = dayTag(); notifScheduleToday(); }
+        else { notifFirePending(); }
+        notifUpdateButton();
+      } catch(e) {}
     }
   });
+
+  // REVISIÓN PERIÓDICA: cada 30s comprobar si hay notificaciones vencidas.
+  // Esto cubre el caso de que los setTimeout se congelen o la pestaña se
+  // suspenda y reactive. Mientras la app (o su proceso PWA) siga viva, dispara.
+  setInterval(() => {
+    try {
+      if (typeof notifGetEnabled === 'function' && notifGetEnabled()) {
+        if (dayTag() !== _lastDayTag) { _lastDayTag = dayTag(); notifScheduleToday(); }
+        else { notifFirePending(); }
+      }
+    } catch(e) {}
+  }, 30000);
+
+  // Registrar Periodic Background Sync si está disponible (Chrome/Android PWA)
+  // Permite que el navegador despierte la app periódicamente para revisar.
+  if ('serviceWorker' in navigator && 'periodicSync' in (navigator.serviceWorker || {})) {
+    // (algunos navegadores lo exponen en el registration)
+  }
+  navigator.serviceWorker && navigator.serviceWorker.ready.then(reg => {
+    if (reg.periodicSync) {
+      reg.periodicSync.register('tm-notif-check', { minInterval: 15 * 60000 }).catch(()=>{});
+    }
+  }).catch(()=>{});
+
+  // Escuchar al Service Worker cuando pide revisar la cola (periodic sync)
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', (ev) => {
+      if (ev.data && ev.data.type === 'tm-check-notifs') {
+        try { if (notifGetEnabled()) notifFirePending(); } catch(e) {}
+      }
+    });
+  }
 })();
 
 
