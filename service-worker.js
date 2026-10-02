@@ -118,3 +118,27 @@ self.addEventListener('notificationclick', function(event) {
     })
   );
 });
+
+// ══════════════════════════════════════════════════════════════════
+// PERIODIC SYNC — revisar notificaciones pendientes en segundo plano
+// ══════════════════════════════════════════════════════════════════
+// Nota: el SW no puede leer window.storage, así que al despertar notifica
+// a las ventanas abiertas para que revisen su cola. Si no hay ventanas,
+// este mecanismo es limitado (el navegador controla cuándo despierta).
+self.addEventListener('periodicsync', function(event) {
+  if (event.tag === 'tm-notif-check') {
+    event.waitUntil(
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clients) {
+        clients.forEach(function(c) { c.postMessage({ type: 'tm-check-notifs' }); });
+      })
+    );
+  }
+});
+
+// Mensajes desde la página (por si quiere forzar mostrar una notificación)
+self.addEventListener('message', function(event) {
+  const data = event.data || {};
+  if (data.type === 'tm-show-notif' && data.title) {
+    self.registration.showNotification(data.title, data.opts || {});
+  }
+});
