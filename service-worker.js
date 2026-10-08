@@ -120,22 +120,46 @@ self.addEventListener('notificationclick', function(event) {
 });
 
 // ══════════════════════════════════════════════════════════════════
-// PERIODIC SYNC — revisar notificaciones pendientes en segundo plano
+// PUSH REAL — notificaciones en segundo plano (app cerrada)
 // ══════════════════════════════════════════════════════════════════
-// Nota: el SW no puede leer window.storage, así que al despertar notifica
-// a las ventanas abiertas para que revisen su cola. Si no hay ventanas,
-// este mecanismo es limitado (el navegador controla cuándo despierta).
-self.addEventListener('periodicsync', function(event) {
-  if (event.tag === 'tm-notif-check') {
-    event.waitUntil(
-      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clients) {
-        clients.forEach(function(c) { c.postMessage({ type: 'tm-check-notifs' }); });
-      })
-    );
+// El servidor envía un mensaje push al endpoint del dispositivo. El
+// navegador despierta este Service Worker y dispara 'push', AUNQUE la
+// PWA esté totalmente cerrada. No depende de ninguna pestaña abierta.
+self.addEventListener('push', function(event) {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch(e) {
+    data = { title: 'theirismuse', body: event.data ? event.data.text() : 'Recordatorio' };
   }
+
+  const title = data.title || 'theirismuse';
+  const options = {
+    body: data.body || '',
+    icon: data.icon || './icon-192.png',
+    badge: './icon-192.png',
+    tag: data.tag || ('tm-push-' + Date.now()),
+    requireInteraction: false,
+    vibrate: [200, 100, 200],
+    data: { url: data.url || './', ...(data.data || {}) }
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  );
 });
 
-// Mensajes desde la página (por si quiere forzar mostrar una notificación)
+// Si la suscripción push cambia (el navegador la rota), re-suscribir
+self.addEventListener('pushsubscriptionchange', function(event) {
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clients) {
+      // Avisar a las ventanas para que re-registren la suscripción cuando se abran
+      clients.forEach(function(c) { c.postMessage({ type: 'tm-resubscribe' }); });
+    })
+  );
+});
+
+// Mensajes desde la página
 self.addEventListener('message', function(event) {
   const data = event.data || {};
   if (data.type === 'tm-show-notif' && data.title) {
