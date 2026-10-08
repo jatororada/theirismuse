@@ -4902,6 +4902,124 @@ function notifShow(title, body, accion) {
 }
 
 // Activa/pide permiso de notificaciones
+
+// ══════════════════════════════════════════════════════════════════
+// PUSH REAL — suscripción + envío del plan al servidor (app cerrada)
+// ══════════════════════════════════════════════════════════════════
+// Config del servidor push (Supabase Edge Functions)
+const PUSH_CONFIG = {
+  vapidPublicKey: 'BLZNcNlytT8ATsUQd21K6vFMovSFvFEbpSE8PuTDKGHWGJrNDUjq9J8jlGOBCToOKMefbeQFaMv4DfxGRhxr8bg',
+  // URL base de las Edge Functions de Supabase
+  subscribeUrl: 'https://gzqjjrkjunoudunieolk.supabase.co/functions/v1/push-subscribe',
+  // anon key de Supabase (pública, segura para el cliente)
+  anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6cWpqcmtqdW5vdWR1bmllb2xrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NjY0NTEsImV4cCI6MjA5NDU0MjQ1MX0.cYZLv_ZqoKersZy2i_HanugkPDU1a_lgKQzujYv3VGA'
+};
+
+// Convierte la clave VAPID base64url a Uint8Array
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+// Obtiene o crea la suscripción push del dispositivo
+async function pushGetSubscription() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    return { error: 'no-support' };
+  }
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(PUSH_CONFIG.vapidPublicKey)
+      });
+    }
+    return { subscription: sub };
+  } catch (e) {
+    return { error: String(e) };
+  }
+}
+
+// Construye el horario del día (igual lógica que notifScheduleToday pero para enviar)
+function pushBuildSchedule() {
+  const now = new Date();
+  const wd = now.getDay();
+  let friShow = '', satShow = '';
+  try {
+    const y = now.getFullYear(), mo = now.getMonth(), da = now.getDate();
+    const friD = da + (5 - wd), satD = da + (6 - wd);
+    const friKey = y+'-'+String(mo+1).padStart(2,'0')+'-'+String(friD).padStart(2,'0');
+    const satKey = y+'-'+String(mo+1).padStart(2,'0')+'-'+String(satD).padStart(2,'0');
+    const friDoy = mo*31 + friD, satDoy = mo*31 + satD;
+    friShow = (DAY_DB[friKey] && DAY_DB[friKey].title) ? DAY_DB[friKey].title : pickPoolShow(5, friDoy, y, mo, friD).show;
+    satShow = (DAY_DB[satKey] && DAY_DB[satKey].title) ? DAY_DB[satKey].title : pickPoolShow(6, satDoy, y, mo, satD).show;
+  } catch(e) {}
+  let todayShow = 'el show de hoy';
+  try {
+    const y = now.getFullYear(), mo = now.getMonth(), da = now.getDate();
+    const key = y+'-'+String(mo+1).padStart(2,'0')+'-'+String(da).padStart(2,'0');
+    const doy = mo*31 + da;
+    todayShow = (DAY_DB[key] && DAY_DB[key].title) ? DAY_DB[key].title : (wd===0 ? 'Descanso' : pickPoolShow(wd, doy, y, mo, da).show);
+  } catch(e) {}
+
+  const plan = buildDayPlan(wd, todayShow, friShow, satShow);
+  if (!plan || !plan.acciones) return [];
+
+  const schedule = [];
+  plan.acciones.forEach(a => {
+    const horaDate = notifParseHora(a.hora);
+    if (!horaDate) return;
+    const fireAt = horaDate.getTime() - NOTIF_LEAD_MIN * 60000;
+    // Solo enviar las futuras (el servidor también filtra por ventana)
+    if (fireAt < now.getTime() - 60000) return;
+    schedule.push({
+      key: a.hora + '|' + a.plat,
+      fireAt: fireAt,
+      title: 'En ' + NOTIF_LEAD_MIN + ' min · ' + notifPlatName(a.plat),
+      body: a.accion + (a.caption ? '\n\n📋 ' + a.caption.split('\n')[0] : '')
+    });
+  });
+  return schedule;
+}
+
+// Envía la suscripción + el horario de hoy al servidor
+async function pushSyncToServer() {
+  if (!notifGetEnabled()) return { ok: false, reason: 'disabled' };
+  const subRes = await pushGetSubscription();
+  if (subRes.error) return { ok: false, reason: subRes.error };
+
+  const now = new Date();
+  const dayTag = now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate();
+  const schedule = pushBuildSchedule();
+
+  try {
+    const resp = await fetch(PUSH_CONFIG.subscribeUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + PUSH_CONFIG.anonKey,
+        'apikey': PUSH_CONFIG.anonKey
+      },
+      body: JSON.stringify({
+        subscription: subRes.subscription.toJSON(),
+        schedule: schedule,
+        dayTag: dayTag,
+        userTag: 'default'
+      })
+    });
+    const data = await resp.json();
+    return { ok: resp.ok, ...data };
+  } catch (e) {
+    return { ok: false, reason: String(e) };
+  }
+}
+
+
 async function notifToggle() {
   if (!('Notification' in window)) {
     alert('Tu navegador no soporta notificaciones.');
@@ -4928,13 +5046,30 @@ async function notifToggle() {
   }
 
   notifSetEnabled(true);
-  const res = notifScheduleToday();
+  const res = notifScheduleToday();  // respaldo local (app abierta)
   notifUpdateButton();
+
+  // PUSH REAL: suscribir el dispositivo y enviar el plan al servidor
+  // Esto hace que las notificaciones lleguen AUNQUE la app esté cerrada.
+  let pushMsg = '';
+  try {
+    const pushRes = await pushSyncToServer();
+    if (pushRes.ok) {
+      pushMsg = ' Push activado en este dispositivo.';
+    } else if (pushRes.reason === 'no-support') {
+      pushMsg = ' (Este navegador no soporta push en segundo plano; funcionará con la app abierta.)';
+    } else {
+      pushMsg = ' (Avisos locales activos; el push en segundo plano no pudo configurarse: ' + (pushRes.reason || 'error') + ')';
+    }
+  } catch(e) {
+    pushMsg = ' (Avisos locales activos.)';
+  }
 
   // Notificación de confirmación
   notifShow('🔔 Notificaciones activadas',
-    'Te avisaré ' + NOTIF_LEAD_MIN + ' min antes de cada publicación de hoy. (' + res.scheduled + ' programadas)',
+    'Te avisaré ' + NOTIF_LEAD_MIN + ' min antes de cada publicación.' + pushMsg,
     null);
+  notifUpdateButton();
 }
 
 // Actualiza el texto/estado del botón
@@ -4957,7 +5092,7 @@ function notifUpdateButton() {
         ? res.scheduled + ' recordatorio(s) programado(s) para hoy · 5 min antes de cada uno'
         : 'No quedan publicaciones pendientes por hoy. Mañana se reprograman.';
     } else {
-      status.textContent = 'Recibe un aviso 5 min antes de cada publicación, aunque la app esté cerrada (con la PWA instalada).';
+      status.textContent = 'Recibe un aviso push 5 min antes de cada publicación, aunque la app esté cerrada (push real en segundo plano).';
     }
   }
 }
@@ -6282,6 +6417,8 @@ document.getElementById('calToday').onclick=()=>{const n=new Date();calY=n.getFu
       if (typeof notifGetEnabled === 'function' && notifGetEnabled()) {
         _lastDayTag = dayTag();
         notifScheduleToday();
+        // Sincronizar el plan de hoy con el servidor push al abrir la app
+        if (typeof pushSyncToServer === 'function') pushSyncToServer().catch(()=>{});
       }
     } catch(e) { console.log('notif init:', e); }
   }
@@ -6299,6 +6436,8 @@ document.getElementById('calToday').onclick=()=>{const n=new Date();calY=n.getFu
         if (dayTag() !== _lastDayTag) { _lastDayTag = dayTag(); notifScheduleToday(); }
         else { notifFirePending(); }
         notifUpdateButton();
+        // Mantener el servidor push sincronizado con el plan actual
+        if (typeof pushSyncToServer === 'function') pushSyncToServer().catch(()=>{});
       } catch(e) {}
     }
   });
@@ -6326,11 +6465,16 @@ document.getElementById('calToday').onclick=()=>{const n=new Date();calY=n.getFu
     }
   }).catch(()=>{});
 
-  // Escuchar al Service Worker cuando pide revisar la cola (periodic sync)
+  // Escuchar mensajes del Service Worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('message', (ev) => {
-      if (ev.data && ev.data.type === 'tm-check-notifs') {
+      if (!ev.data) return;
+      if (ev.data.type === 'tm-check-notifs') {
         try { if (notifGetEnabled()) notifFirePending(); } catch(e) {}
+      }
+      // El SW pide re-suscribir (la suscripción push cambió)
+      if (ev.data.type === 'tm-resubscribe') {
+        try { if (notifGetEnabled() && typeof pushSyncToServer === 'function') pushSyncToServer().catch(()=>{}); } catch(e) {}
       }
     });
   }
