@@ -2400,7 +2400,27 @@ CB & SC — let's end 2026 together 💜🖤</div>
   .rep-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
   .rep-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
   .rep-field{display:flex;flex-direction:column;gap:4px;}
-  .rep-field label{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;}
+  .rep-field label{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;gap:5px;}
+  /* ── Ayuda por campo (ⓘ + tooltip) ── */
+  .fhelp{position:relative;display:inline-flex;align-items:center;justify-content:center;
+    width:14px;height:14px;border-radius:50%;border:1px solid var(--border2);
+    color:var(--text3);font-family:var(--sans);font-size:9px;font-weight:600;line-height:1;
+    cursor:help;flex-shrink:0;user-select:none;transition:all .15s;text-transform:none;letter-spacing:0;}
+  .fhelp:hover,.fhelp.open{border-color:var(--gold);color:var(--gold);background:rgba(200,146,26,.1);}
+  .fhelp .fhelp-pop{position:absolute;bottom:calc(100% + 8px);left:-8px;
+    width:230px;max-width:72vw;background:var(--surface);border:1px solid var(--gold);border-radius:8px;
+    padding:10px 12px;font-family:var(--sans);font-size:11px;line-height:1.5;color:var(--text2);
+    letter-spacing:0;text-transform:none;text-align:left;z-index:200;
+    opacity:0;visibility:hidden;transition:opacity .15s,visibility .15s;pointer-events:none;
+    box-shadow:0 8px 24px rgba(0,0,0,.5);}
+  .fhelp .fhelp-pop b{color:var(--text);font-weight:600;}
+  .fhelp .fhelp-pop .fhelp-auto{display:inline-block;margin-top:5px;font-family:var(--mono);font-size:8px;
+    letter-spacing:.05em;text-transform:uppercase;padding:2px 6px;border-radius:4px;}
+  .fhelp .fhelp-pop .fhelp-auto.a{background:rgba(90,158,111,.15);color:var(--green);}
+  .fhelp .fhelp-pop .fhelp-auto.m{background:rgba(122,120,117,.15);color:var(--text3);}
+  .fhelp .fhelp-pop::after{content:"";position:absolute;top:100%;left:13px;
+    border:6px solid transparent;border-top-color:var(--gold);}
+  .fhelp:hover .fhelp-pop,.fhelp.open .fhelp-pop{opacity:1;visibility:visible;pointer-events:auto;}
   .rep-field input,.rep-field select,.rep-field textarea{
     background:var(--bg3);border:1px solid var(--border2);color:var(--text);
     font-family:var(--mono);font-size:12px;padding:8px 10px;border-radius:5px;
@@ -2412,6 +2432,17 @@ CB & SC — let's end 2026 together 💜🖤</div>
   .rep-field input[type="number"]{-moz-appearance:textfield;}
   .rep-field input[type="number"]::-webkit-outer-spin-button,
   .rep-field input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;}
+  /* ── Botón de acumulación (calcular desde diarios) ── */
+  .acc-box{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+    background:linear-gradient(to right,rgba(200,146,26,.08),rgba(200,146,26,.02));
+    border:1px solid rgba(200,146,26,.25);border-radius:9px;padding:14px 16px;margin-bottom:18px;}
+  .acc-txt{flex:1;min-width:200px;}
+  .acc-title{font-family:var(--serif);font-size:15px;color:var(--gold);margin-bottom:3px;}
+  .acc-sub{font-size:11px;color:var(--text2);line-height:1.5;}
+  .acc-btn{background:var(--gold);color:var(--bg);border:none;border-radius:7px;padding:10px 20px;
+    font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s;}
+  .acc-btn:hover{background:var(--gold2);transform:translateY(-1px);}
+  .toggle-ref{font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:5px;letter-spacing:.05em;opacity:.8;}
   .rep-toggle{display:flex;gap:8px;}
   .rep-toggle label{display:flex;align-items:center;gap:5px;cursor:pointer;font-family:var(--mono);font-size:11px;color:var(--text2);background:var(--bg3);border:1px solid var(--border2);padding:6px 12px;border-radius:4px;transition:all .15s;}
   .rep-toggle input[type=radio]{display:none;}
@@ -2642,6 +2673,14 @@ CB & SC — let's end 2026 together 💜🖤</div>
   <div id="rep-week" class="tc">
     <form class="rep-form" id="formWeek" onsubmit="return false">
 
+      <div class="acc-box">
+        <div class="acc-txt">
+          <div class="acc-title">⚡ Calcular desde mis reportes diarios</div>
+          <div class="acc-sub">Suma automáticamente los tokens, ingresos, horas y seguidores de los reportes diarios que guardaste dentro de esta semana. Primero elige las fechas abajo.</div>
+        </div>
+        <button type="button" class="acc-btn" onclick="aplicarAcumulados('week')">Calcular</button>
+      </div>
+
       <div class="rep-section">
         <div class="rep-section-title">General</div>
         <div class="rep-grid">
@@ -2741,6 +2780,14 @@ CB & SC — let's end 2026 together 💜🖤</div>
   <!-- ══ MENSUAL ══ -->
   <div id="rep-month" class="tc">
     <form class="rep-form" id="formMonth" onsubmit="return false">
+
+      <div class="acc-box">
+        <div class="acc-txt">
+          <div class="acc-title">⚡ Calcular desde mis reportes diarios</div>
+          <div class="acc-sub">Suma automáticamente los tokens, ingresos y streams de todos los reportes diarios que guardaste dentro de este mes. Primero elige el mes y el año abajo.</div>
+        </div>
+        <button type="button" class="acc-btn" onclick="aplicarAcumulados('month')">Calcular</button>
+      </div>
 
       <div class="rep-section">
         <div class="rep-section-title">General</div>
@@ -6929,6 +6976,8 @@ function saveStreamReport() {
 
   renderStreamHistory();
   if (typeof renderDashCharts === 'function') renderDashCharts();
+  if (typeof updateFieldRefs === 'function') updateFieldRefs();
+  if (typeof updateToggleRefs === 'function') updateToggleRefs();
 
   // Clear form after short delay
   setTimeout(() => clearStreamForm(), 800);
@@ -6986,7 +7035,7 @@ function renderStreamHistory() {
   });
 }
 
-function loadStreamReport(key) {
+function loadStreamReport(key, _noScroll) {
   const d = JSON.parse(_store.getItem(key));
   if (!d) return;
   setVal('s_fecha', d.fecha); setVal('s_dia', d.dia); setVal('s_show', d.show); setVal('s_dur', d.dur);
@@ -7059,6 +7108,8 @@ function saveWeekReport() {
   setTimeout(() => { btn.textContent = '💾 Guardar reporte semanal'; btn.classList.remove('saved'); }, 2500);
   renderWeekHistory();
   if (typeof renderDashCharts === 'function') renderDashCharts();
+  if (typeof updateFieldRefs === 'function') updateFieldRefs();
+  if (typeof updateToggleRefs === 'function') updateToggleRefs();
   setTimeout(() => clearWeekForm(), 800);
 }
 
@@ -7111,7 +7162,7 @@ function renderWeekHistory() {
   });
 }
 
-function loadWeekReport(key) {
+function loadWeekReport(key, _noScroll) {
   const d = JSON.parse(_store.getItem(key));
   if (!d) return;
   setVal('w_desde', d.desde); setVal('w_hasta', d.hasta);
@@ -7132,9 +7183,11 @@ function loadWeekReport(key) {
   setVal('w_best_show', d.best_show); setVal('w_best_day', d.best_day);
   setVal('w_ajustar', d.ajustar);
   setVal('w_next_vie', d.next_vie); setVal('w_next_sab', d.next_sab);
-  // Scroll al inicio del formulario semanal
-  const form = document.getElementById('rep-week');
-  if (form && form.scrollIntoView) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Scroll al inicio del formulario semanal (solo en carga manual, no al restaurar)
+  if (!_noScroll) {
+    const form = document.getElementById('rep-week');
+    if (form && form.scrollIntoView) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 // ── SAVE MONTH REPORT ────────────────────────────────────────────────
@@ -7179,6 +7232,8 @@ function saveMonthReport() {
   setTimeout(() => { btn.textContent = '💾 Guardar reporte mensual'; btn.classList.remove('saved'); }, 2500);
   renderMonthHistory();
   if (typeof renderDashCharts === 'function') renderDashCharts();
+  if (typeof updateFieldRefs === 'function') updateFieldRefs();
+  if (typeof updateToggleRefs === 'function') updateToggleRefs();
   setTimeout(() => clearMonthForm(), 800);
 }
 
@@ -7229,7 +7284,7 @@ function renderMonthHistory() {
   });
 }
 
-function loadMonthReport(key) {
+function loadMonthReport(key, _noScroll) {
   const d = JSON.parse(_store.getItem(key));
   if (!d) return;
   setVal('m_mes', d.mes); setVal('m_anio', d.anio);
@@ -7247,9 +7302,11 @@ function loadMonthReport(key) {
   const setCk = (id, v) => { const el = document.getElementById(id); if (el && el.type === 'checkbox') el.checked = !!v; };
   setCk('m_ck1', d.ck1); setCk('m_ck2', d.ck2); setCk('m_ck3', d.ck3); setCk('m_ck4', d.ck4);
   setCk('m_ck5', d.ck5); setCk('m_ck6', d.ck6); setCk('m_ck7', d.ck7);
-  // Scroll al inicio del formulario mensual
-  const form = document.getElementById('rep-month');
-  if (form && form.scrollIntoView) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Scroll al inicio del formulario mensual (solo en carga manual, no al restaurar)
+  if (!_noScroll) {
+    const form = document.getElementById('rep-month');
+    if (form && form.scrollIntoView) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 function deleteReport(key, type) {
@@ -7258,6 +7315,255 @@ function deleteReport(key, type) {
   if (type==='stream') renderStreamHistory();
   else if (type==='week') renderWeekHistory();
   else renderMonthHistory();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// AYUDA POR CAMPO (ⓘ tooltip) + REFERENCIA = ÚLTIMO VALOR REAL
+// ══════════════════════════════════════════════════════════════════
+// FIELD_HELP: metadatos por id de campo.
+//   t = qué es / qué ingresar · u = unidad · a = true si lo autocompleta el analizador
+//   ref = clave del indicador para buscar su último valor real (para el placeholder)
+const FIELD_HELP = {
+  // ---------- DIARIO ----------
+  s_fecha:        { t:'Fecha del stream que estás reportando.', u:'fecha', a:false },
+  s_show:         { t:'Nombre o temática del show de ese día (ej. "Ice show", "Wax").', u:'texto', a:false },
+  s_dur:          { t:'Cuántas horas estuviste en vivo. Se usa para calcular tus ingresos por hora.', u:'horas', a:false },
+  s_dia:          { t:'Día de la semana. Se completa solo a partir de la fecha.', u:'texto', a:false },
+  s_cb_tk:        { t:'Tokens que ganaste en Chaturbate ese día. Lo calcula el analizador CB al pegar tu actividad.', u:'tokens', a:true, ref:'cb_tk' },
+  s_cb_peak:      { t:'Máximo de espectadores conectados a la vez en CB.', u:'personas', a:false, ref:'cb_peak' },
+  s_cb_avg:       { t:'Promedio de espectadores durante el stream en CB.', u:'personas', a:false, ref:'cb_avg' },
+  s_cb_new_fans:  { t:'Seguidores nuevos que ganaste en CB ese día.', u:'personas', a:false, ref:'cb_new_fans' },
+  s_cb_total_fans:{ t:'Total acumulado de seguidores en CB al cierre del día.', u:'personas', a:false, ref:'cb_total_fans' },
+  s_cb_spy:       { t:'Tokens de emisiones espía (otros usuarios espiando tu privado). Lo detecta el analizador CB.', u:'tokens', a:true, ref:'cb_spy' },
+  s_cb_priv_n:    { t:'Cuántos shows privados hiciste en CB. Lo cuenta el analizador CB.', u:'sesiones', a:true, ref:'cb_priv_n' },
+  s_cb_priv_tipo: { t:'Tipo de privado según la tarifa (30 o 60 tk/min). El analizador lo deduce del ritmo de tokens.', u:'texto', a:true },
+  s_cb_priv_dur:  { t:'Minutos totales en privados de CB. Lo estima el analizador por las marcas de tiempo.', u:'minutos', a:true, ref:'cb_priv_dur' },
+  s_cb_priv_tk:   { t:'Tokens ganados en privados de CB. Lo suma el analizador CB.', u:'tokens', a:true, ref:'cb_priv_tk' },
+  s_cb_of_men:    { t:'Cuántas veces mencionaste tu OnlyFans durante el stream de CB.', u:'veces', a:false },
+  s_cb_fc_men:    { t:'Cuántas veces mencionaste tu Fan Club de CB.', u:'veces', a:false },
+  s_cb_fc_new:    { t:'Nuevos suscriptores al Fan Club de CB ese día.', u:'personas', a:false, ref:'cb_fc_new' },
+  s_cb_fc_total:  { t:'Total de suscriptores al Fan Club de CB.', u:'personas', a:false, ref:'cb_fc_total' },
+  s_sc_total:     { t:'Ingresos de Stripchat del día en dólares. El analizador SC lo calcula (tokens × $0.05).', u:'dólares', a:true, ref:'sc_total' },
+  s_sc_hoy:       { t:'Ingresos por hora de hoy. Se calcula solo: ingresos SC ÷ horas en vivo.', u:'$/hora', a:true },
+  s_sc_30h:       { t:'Tu promedio de ingresos por hora de las últimas 30 h (lo muestra Stripchat).', u:'$/hora', a:false, ref:'sc_30h' },
+  s_sc_new_fans:  { t:'Favoritos nuevos en Stripchat ese día.', u:'personas', a:false, ref:'sc_new_fans' },
+  s_sc_total_fans:{ t:'Total acumulado de favoritos en Stripchat.', u:'personas', a:false, ref:'sc_total_fans' },
+  s_sc_priv_n:    { t:'Cuántos privados hiciste en Stripchat. Lo cuenta el analizador SC.', u:'sesiones', a:true, ref:'sc_priv_n' },
+  s_sc_priv_tipo: { t:'Tipo de privado en SC (regular ~30 o exclusivo ~60 tk/min). El analizador lo deduce.', u:'texto', a:true },
+  s_sc_priv_dur:  { t:'Minutos totales en privados de SC. Lo aporta el analizador SC.', u:'minutos', a:true, ref:'sc_priv_dur' },
+  s_sc_fc_men:    { t:'Cuántas veces mencionaste tu Fan Club de SC.', u:'veces', a:false },
+  s_sc_fc_new:    { t:'Nuevos suscriptores al Fan Club de SC ese día.', u:'personas', a:false, ref:'sc_fc_new' },
+  s_sc_fc_total:  { t:'Total de suscriptores al Fan Club de SC.', u:'personas', a:false, ref:'sc_fc_total' },
+  s_of_ing:       { t:'Ingresos de OnlyFans del día en dólares.', u:'dólares', a:false, ref:'of_ing' },
+  s_of_new:       { t:'Nuevos suscriptores de OnlyFans ese día.', u:'personas', a:false, ref:'of_new' },
+  s_tippers:      { t:'Los que más propina dejaron (nombre · tokens). El analizador agrega el top de cada plataforma.', u:'texto', a:true },
+  s_bien:         { t:'Qué funcionó bien ese día. Texto libre para tu análisis.', u:'texto', a:false },
+  s_mejorar:      { t:'Qué mejorarías la próxima vez. Texto libre.', u:'texto', a:false },
+  s_next_show:    { t:'Qué show tienes planeado para el próximo stream.', u:'texto', a:false },
+  s_next_props:   { t:'Props o materiales que necesitas preparar para el próximo show.', u:'texto', a:false },
+  // ---------- SEMANAL ----------
+  w_desde:        { t:'Primer día de la semana que reportas.', u:'fecha', a:false },
+  w_hasta:        { t:'Último día de la semana que reportas.', u:'fecha', a:false },
+  w_streams:      { t:'Cuántos streams hiciste en la semana. Se puede sumar de tus reportes diarios.', u:'streams', a:true, acc:'count_streams' },
+  w_horas:        { t:'Horas totales en vivo en la semana. Suma de las horas de tus reportes diarios.', u:'horas', a:true, acc:'sum:dur' },
+  w_cb_tk:        { t:'Tokens totales de CB en la semana. Suma de los tokens diarios de CB.', u:'tokens', a:true, acc:'sum:cb_tk' },
+  w_cb_priv_tk:   { t:'Tokens de privados de CB en la semana. Suma de los privados diarios.', u:'tokens', a:true, acc:'sum:cb_priv_tk' },
+  w_cb_priv_n:    { t:'Privados de CB en la semana (sesiones). Suma de los diarios.', u:'sesiones', a:true, acc:'sum:cb_priv_n' },
+  w_cb_priv_tipo: { t:'Tipo de privado de CB predominante en la semana.', u:'texto', a:false },
+  w_cb_priv_dur:  { t:'Minutos totales en privados de CB en la semana. Suma de los diarios.', u:'minutos', a:true, acc:'sum:cb_priv_dur' },
+  w_cb_fans_start:{ t:'Seguidores de CB al empezar la semana.', u:'personas', a:false },
+  w_cb_fans_end:  { t:'Seguidores de CB al terminar la semana. Es el último total diario de la semana.', u:'personas', a:true, acc:'last:cb_total_fans', ref:'cb_total_fans' },
+  w_cb_fc:        { t:'Total de suscriptores del Fan Club de CB al cierre de la semana.', u:'personas', a:false, ref:'cb_fc_total' },
+  w_sc_total:     { t:'Ingresos totales de SC en la semana ($). Suma de los ingresos diarios de SC.', u:'dólares', a:true, acc:'sum:sc_total' },
+  w_sc_priv_dur:  { t:'Minutos totales en privados de SC en la semana. Suma de los diarios.', u:'minutos', a:true, acc:'sum:sc_priv_dur' },
+  w_sc_priv_tipo: { t:'Tipo de privado de SC predominante en la semana.', u:'texto', a:false },
+  w_sc_30h:       { t:'Promedio de ingresos por hora de SC (prom. 30 h de Stripchat).', u:'$/hora', a:false, ref:'sc_30h' },
+  w_sc_stripscore:{ t:'Tu StripScore de Stripchat al cierre de la semana. Alimenta el dashboard.', u:'puntos', a:false, ref:'sc_stripscore' },
+  w_sc_rating:    { t:'Calificación promedio de tus privados en SC (de 5).', u:'estrellas', a:false, ref:'sc_rating' },
+  w_sc_pago_tk:   { t:'Tokens que te pagará Stripchat este ciclo. Se convierte a dólares automáticamente.', u:'tokens', a:false },
+  w_sc_pago_usd:  { t:'Monto del próximo pago de SC. Se calcula solo: tokens × $0.05.', u:'dólares', a:true },
+  w_sc_fans_start:{ t:'Favoritos de SC al empezar la semana.', u:'personas', a:false },
+  w_sc_fans_end:  { t:'Favoritos de SC al terminar la semana. Es el último total diario.', u:'personas', a:true, acc:'last:sc_total_fans', ref:'sc_total_fans' },
+  w_sc_fc:        { t:'Total de suscriptores del Fan Club de SC al cierre de la semana.', u:'personas', a:false, ref:'sc_fc_total' },
+  w_of_new:       { t:'Nuevos suscriptores de OnlyFans en la semana. Suma de los diarios.', u:'personas', a:true, acc:'sum:of_new' },
+  w_of_total:     { t:'Total de suscriptores de OnlyFans al cierre de la semana.', u:'personas', a:false, ref:'of_total' },
+  w_of_ppv:       { t:'Ingresos por contenido PPV de OnlyFans en la semana ($).', u:'dólares', a:false },
+  w_best_show:    { t:'El show que más tokens generó en la semana.', u:'texto', a:false },
+  w_best_day:     { t:'El día con mejor ingreso por hora en SC.', u:'texto', a:false },
+  w_ajustar:      { t:'Qué vas a ajustar la próxima semana. Texto libre.', u:'texto', a:false },
+  w_next_vie:     { t:'Show planeado para el próximo viernes.', u:'texto', a:false },
+  w_next_sab:     { t:'Show planeado para el próximo sábado.', u:'texto', a:false },
+  // ---------- MENSUAL ----------
+  m_mes:          { t:'Mes que estás reportando.', u:'texto', a:false },
+  m_anio:         { t:'Año del reporte.', u:'texto', a:false },
+  m_streams:      { t:'Streams totales del mes. Suma de los diarios del mes.', u:'streams', a:true, acc:'count_streams' },
+  m_premium:      { t:'Cuántos shows premium de sábado hiciste en el mes.', u:'shows', a:false },
+  m_cb_tk:        { t:'Tokens totales de CB en el mes. Suma de los diarios del mes.', u:'tokens', a:true, acc:'sum:cb_tk' },
+  m_cb_priv_tk:   { t:'Tokens de privados de CB en el mes. Suma de los diarios.', u:'tokens', a:true, acc:'sum:cb_priv_tk' },
+  m_cb_fans_start:{ t:'Seguidores de CB al empezar el mes.', u:'personas', a:false },
+  m_cb_fans_end:  { t:'Seguidores de CB al cerrar el mes. Último total diario del mes.', u:'personas', a:true, acc:'last:cb_total_fans', ref:'cb_total_fans' },
+  m_cb_fc:        { t:'Total de suscriptores del Fan Club de CB al cierre del mes.', u:'personas', a:false, ref:'cb_fc_total' },
+  m_sc_total:     { t:'Ingresos totales de SC en el mes ($). Suma de los diarios.', u:'dólares', a:true, acc:'sum:sc_total' },
+  m_sc_30h:       { t:'Promedio de ingresos por hora de SC en el mes.', u:'$/hora', a:false, ref:'sc_30h' },
+  m_sc_pagos_n:   { t:'Cuántos pagos recibiste de SC en el mes.', u:'pagos', a:false },
+  m_sc_pagos_usd: { t:'Suma de todos los pagos de SC del mes ($).', u:'dólares', a:false },
+  m_sc_fans_start:{ t:'Favoritos de SC al empezar el mes.', u:'personas', a:false },
+  m_sc_fans_end:  { t:'Favoritos de SC al cerrar el mes. Último total diario del mes.', u:'personas', a:true, acc:'last:sc_total_fans', ref:'sc_total_fans' },
+  m_sc_fc:        { t:'Total de suscriptores del Fan Club de SC al cierre del mes.', u:'personas', a:false, ref:'sc_fc_total' },
+  m_sc_rating:    { t:'Calificación promedio de tus privados en SC (de 5).', u:'estrellas', a:false, ref:'sc_rating' },
+  m_of_new:       { t:'Nuevos suscriptores de OnlyFans en el mes. Suma de los diarios.', u:'personas', a:true, acc:'sum:of_new' },
+  m_of_total:     { t:'Total de suscriptores de OnlyFans al cierre del mes.', u:'personas', a:false, ref:'of_total' },
+  m_of_ppv:       { t:'Ingresos por contenido PPV de OnlyFans en el mes ($).', u:'dólares', a:false },
+  m_best_show:    { t:'El mejor show del mes por ingresos.', u:'texto', a:false },
+  m_total_usd:    { t:'Ingreso total del mes sumando todas las plataformas ($).', u:'dólares', a:false },
+  m_ajustar:      { t:'Qué vas a mejorar el mes siguiente. Texto libre.', u:'texto', a:false },
+  m_next_shows:   { t:'Shows premium que planeas para el mes siguiente.', u:'texto', a:false },
+  m_next_meta:    { t:'Tu meta de ingresos para el mes siguiente ($).', u:'dólares', a:false }
+};
+
+// Inyecta el icono ⓘ con tooltip en la etiqueta de cada campo que tenga ayuda.
+function initFieldHelp() {
+  document.querySelectorAll('#panel-reporte .rep-field').forEach(field => {
+    const input = field.querySelector('input,select,textarea');
+    const label = field.querySelector('label');
+    if (!input || !label) return;
+    const id = input.id;
+    if (!id || label.querySelector('.fhelp')) return; // ya tiene ayuda
+    const meta = FIELD_HELP[id];
+    // Texto de ayuda: del metadato, o genérico a partir del label
+    let tip, unit, auto;
+    if (meta) { tip = meta.t; unit = meta.u; auto = meta.a; }
+    else {
+      const name = label.textContent.replace(/●.*$/,'').trim();
+      tip = 'Ingresa aquí: ' + name.toLowerCase() + '.'; unit = ''; auto = false;
+    }
+    const unitLine = unit ? `<br><span style="color:var(--text3);">Unidad: ${unit}.</span>` : '';
+    const autoBadge = auto
+      ? `<span class="fhelp-auto a">● se autocompleta con el analizador</span>`
+      : `<span class="fhelp-auto m">● ingreso manual</span>`;
+    const help = document.createElement('span');
+    help.className = 'fhelp';
+    help.setAttribute('role','button');
+    help.setAttribute('tabindex','0');
+    help.setAttribute('aria-label','Ayuda: ' + (meta ? tip : label.textContent.trim()));
+    help.innerHTML = 'i<span class="fhelp-pop"><b>' + tip + '</b>' + unitLine + '<br>' + autoBadge + '</span>';
+    // Táctil: alternar al tocar (no hay hover). También teclado.
+    const toggle = (ev) => {
+      ev.preventDefault(); ev.stopPropagation();
+      const wasOpen = help.classList.contains('open');
+      document.querySelectorAll('.fhelp.open').forEach(h => h.classList.remove('open'));
+      if (!wasOpen) help.classList.add('open');
+    };
+    help.addEventListener('click', toggle);
+    help.addEventListener('keydown', (ev) => { if (ev.key==='Enter'||ev.key===' ') toggle(ev); });
+    label.appendChild(help);
+  });
+  // Cerrar tooltips abiertos al tocar fuera
+  if (!window._fhelpOutside) {
+    window._fhelpOutside = true;
+    document.addEventListener('click', (ev) => {
+      if (!ev.target.closest('.fhelp')) document.querySelectorAll('.fhelp.open').forEach(h => h.classList.remove('open'));
+    });
+  }
+}
+
+// Busca el último valor real de un indicador en un tipo de reporte concreto.
+// prefix: 'tm_stream_' | 'tm_week_' | 'tm_month_'. field: la clave guardada.
+function _lastRealValue(field, prefix) {
+  if (!field) return null;
+  const prefixes = prefix ? [prefix] : ['tm_stream_','tm_week_','tm_month_'];
+  for (const p of prefixes) {
+    const keys = _store.keys().filter(k => k.startsWith(p)).sort().reverse();
+    for (const k of keys) {
+      try {
+        const d = JSON.parse(_store.getItem(k));
+        if (d && d[field] !== undefined && d[field] !== null && String(d[field]).trim() !== '') return d[field];
+      } catch(e) {}
+    }
+  }
+  return null;
+}
+
+// Deriva la clave guardada y el tipo de reporte a partir del id del campo.
+// 's_cb_tk' → {field:'cb_tk', prefix:'tm_stream_'}
+// 'w_sc_total' → {field:'sc_total', prefix:'tm_week_'} ; 'm_...' → mensual
+function _fieldMeta(id) {
+  const m = id.match(/^([swm])_(.+)$/);
+  if (!m) return null;
+  const prefix = m[1] === 's' ? 'tm_stream_' : (m[1] === 'w' ? 'tm_week_' : 'tm_month_');
+  return { field: m[2], prefix };
+}
+
+// Actualiza el placeholder de CADA campo de texto/número de los reportes con el
+// ÚLTIMO valor real registrado de ese indicador (en su mismo tipo de reporte).
+// Si no hay registro previo, muestra un texto orientativo ("Ingresa un valor").
+// Nunca escribe en el campo: solo cambia el placeholder (texto de fondo gris).
+function updateFieldRefs() {
+  document.querySelectorAll('#panel-reporte .rep-field').forEach(field => {
+    const el = field.querySelector('input,textarea,select');
+    if (!el || !el.id) return;
+    // Los campos de fecha, los de solo-lectura/auto y los <select> no llevan
+    // placeholder de referencia (fecha se elige; auto se calcula solo).
+    if (el.tagName === 'SELECT') return;
+    if (el.type === 'date' || el.readOnly) return;
+    const fm = _fieldMeta(el.id);
+    if (!fm) return;
+    const val = _lastRealValue(fm.field, fm.prefix);
+    if (val !== null && val !== undefined && String(val).trim() !== '') {
+      el.placeholder = 'último: ' + val;
+    } else {
+      el.placeholder = 'Ingresa un valor';
+    }
+  });
+}
+
+// Muestra el último valor registrado de cada grupo de botones (SÍ/NO) como una
+// nota de referencia TENUE junto al grupo — SIN seleccionar ningún botón.
+// Nunca marca un radio: solo informa cuál fue el último dato registrado.
+function updateToggleRefs() {
+  document.querySelectorAll('#panel-reporte .rep-toggle').forEach(group => {
+    const radio = group.querySelector('input[type="radio"]');
+    if (!radio || !radio.name) return;
+    const name = radio.name;
+    // excluir los radios dinámicos de goals (cb_g0, sc_g1, ...)
+    if (/_g\d+$/.test(name)) return;
+    const fm = _fieldMeta(name);
+    if (!fm) return;
+    const val = _lastRealValue(fm.field, fm.prefix);
+    // localizar/crear la etiqueta de referencia junto al grupo
+    let ref = group.parentElement.querySelector('.toggle-ref');
+    if (val !== null && val !== undefined && String(val).trim() !== '') {
+      const txt = String(val).toLowerCase() === 'si' ? 'SÍ' : (String(val).toLowerCase() === 'no' ? 'NO' : val);
+      if (!ref) {
+        ref = document.createElement('div');
+        ref.className = 'toggle-ref';
+        group.parentElement.appendChild(ref);
+      }
+      ref.textContent = 'último registro: ' + txt;
+    } else if (ref) {
+      ref.remove(); // sin historial → no mostrar nota
+    }
+  });
+}
+
+// ── RESTAURAR ÚLTIMOS REPORTES EN LOS FORMULARIOS ────────────────────
+// Rellena cada formulario (diario/semanal/mensual) con el ÚLTIMO reporte
+// guardado, para que al volver a entrar los datos aparezcan solos, sin tener
+// que pulsar "cargar". No borra nada: cada reporte vive bajo su propia clave
+// (tm_stream_<fecha>, tm_week_<desde>, tm_month_<mes-anio>), así que distintas
+// fechas nunca se pisan. _noScroll evita el salto de página al arrancar.
+let _restoringReports = false;
+function restoreLastReports() {
+  _restoringReports = true;
+  try {
+    const sKeys = _store.keys().filter(k => k.startsWith('tm_stream_')).sort();
+    const wKeys = _store.keys().filter(k => k.startsWith('tm_week_')).sort();
+    const mKeys = _store.keys().filter(k => k.startsWith('tm_month_')).sort();
+    if (sKeys.length && typeof loadStreamReport === 'function') loadStreamReport(sKeys[sKeys.length-1], true);
+    if (wKeys.length && typeof loadWeekReport === 'function')   loadWeekReport(wKeys[wKeys.length-1], true);
+    if (mKeys.length && typeof loadMonthReport === 'function')  loadMonthReport(mKeys[mKeys.length-1], true);
+  } catch(e) { console.error('restoreLastReports:', e); }
+  _restoringReports = false;
 }
 
 // ── INIT REPORTS ─────────────────────────────────────────────────────
@@ -7270,6 +7576,19 @@ function initReports() {
   renderStreamHistory();
   renderWeekHistory();
   renderMonthHistory();
+  // Los formularios arrancan VACÍOS. El último dato real se muestra solo como
+  // referencia (placeholder en los campos, nota tenue en los botones), sin
+  // rellenar ni seleccionar nada. Los datos siguen guardándose y sincronizándose;
+  // para recuperar un reporte completo está el botón "cargar" del historial.
+  // Ayudas (ⓘ) y referencias (último valor real) en cada campo
+  initFieldHelp();
+  updateFieldRefs();
+  updateToggleRefs();
+  // Si el usuario escribe a mano en un campo, quitar la marca de autocompletado
+  // para que el analizador ya no lo sobrescriba.
+  document.querySelectorAll('#panel-reporte input, #panel-reporte select, #panel-reporte textarea').forEach(el => {
+    el.addEventListener('input', () => { if (!_restoringReports) el.dataset.autofill = ''; });
+  });
 }
 
 
@@ -7444,117 +7763,170 @@ function flashField(el) {
 }
 
 // ── AUTO-FILL REPORTE DESDE ANALIZADOR ──────────────────────────────
+// Rellena un campo con un valor del analizador SIN pisar lo que el usuario
+// escribió a mano: solo escribe si el campo está vacío o si su valor actual
+// ya había sido puesto por el analizador (se marca con data-autofill).
+function _fillAnz(id, val) {
+  const el = document.getElementById(id);
+  if (!el || val === null || val === undefined || val === '' || (typeof val === 'number' && isNaN(val))) return false;
+  const current = String(el.value || '').trim();
+  const wasAuto = el.dataset.autofill === '1';
+  if (current !== '' && !wasAuto) return false; // valor manual presente → no pisar
+  el.value = val;
+  el.dataset.autofill = '1';
+  flashField(el);
+  return true;
+}
+// Añade una línea de tipper al textarea sin duplicar la de esa plataforma.
+function _addTipperLine(line, tag) {
+  const el = document.getElementById('s_tippers');
+  if (!el) return;
+  const lines = String(el.value||'').split('\n').filter(l => l.trim() && !l.includes(tag));
+  lines.push(line);
+  el.value = lines.join('\n');
+  flashField(el);
+}
+
 function fillReporteFromAnalizador(plat, result) {
   if (!result) return;
 
   if (plat === 'cb') {
-    // Tokens ganados CB
-    if (result.tokensGanados > 0) {
-      const el = document.getElementById('s_cb_tk');
-      if (el) { el.value = result.tokensGanados; el.style.borderColor = 'var(--gold)'; }
-    }
-    // Privados CB
+    _fillAnz('s_cb_tk', result.tokensGanados > 0 ? result.tokensGanados : null);
+    if (result.spyTokens > 0) _fillAnz('s_cb_spy', result.spyTokens);
+
     if (result.privadoTokens > 0) {
-      const n = document.getElementById('s_cb_priv_n');
-      if (n) { n.value = result.privadoSesiones || 1; n.style.borderColor = 'var(--gold)'; }
-
-      const tipo = document.getElementById('s_cb_priv_tipo');
-      if (tipo) {
+      _fillAnz('s_cb_priv_n', result.privadoSesiones || 1);
+      _fillAnz('s_cb_priv_dur', result.privadoMinutos);
+      _fillAnz('s_cb_priv_tk', result.privadoTokens);
+      const tipoEl = document.getElementById('s_cb_priv_tipo');
+      if (tipoEl && (String(tipoEl.value||'').trim()==='' || tipoEl.dataset.autofill==='1')) {
         const rate = result.privadoMinutos > 0 ? Math.round(result.privadoTokens / result.privadoMinutos) : 0;
-        if (rate >= 55) tipo.value = 'Exclusive (60 tk/min)';
-        else if (rate >= 28) tipo.value = 'Private (30 tk/min)';
-        else tipo.value = 'Ambos';
-        tipo.style.borderColor = 'var(--gold)';
+        tipoEl.value = rate >= 55 ? 'Exclusive (60 tk/min)' : (rate >= 28 ? 'Private (30 tk/min)' : 'Ambos');
+        tipoEl.dataset.autofill = '1'; flashField(tipoEl);
       }
-
-      const dur = document.getElementById('s_cb_priv_dur');
-      if (dur) { dur.value = result.privadoMinutos; dur.style.borderColor = 'var(--gold)'; }
-
-      const tk = document.getElementById('s_cb_priv_tk');
-      if (tk) { tk.value = result.privadoTokens; tk.style.borderColor = 'var(--gold)'; }
     }
 
-    // Top tipper CB
     if (result.topTippers && result.topTippers.length > 0) {
-      const tippersEl = document.getElementById('s_tippers');
       const top = result.topTippers[0];
-      const existing = tippersEl ? tippersEl.value.trim() : '';
-      const cbLine = top[0] + ' · ' + top[1] + ' tk (CB)';
-      if (tippersEl) {
-        tippersEl.value = existing ? existing + '\n' + cbLine : cbLine;
-        flashField(tippersEl);
-      }
+      _addTipperLine(top[0] + ' · ' + top[1] + ' tk (CB)', '(CB)');
     }
-
-    // Flash effect
-    ['s_cb_tk','s_cb_priv_n','s_cb_priv_dur','s_cb_priv_tk'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) setTimeout(() => el.style.borderColor = '', 3000);
-    });
-
-    // Show notification
     showAnzFillNotif('CB', 'Reporte');
   }
 
   if (plat === 'sc') {
-    // Ingresos totales SC (tokens × 0.05)
     if (result.totalTokens > 0) {
       const usd = (result.totalTokens * 0.05).toFixed(2);
-      const el = document.getElementById('s_sc_total');
-      if (el) { el.value = usd; el.style.borderColor = 'var(--gold)'; calcScHoy(); }
+      if (_fillAnz('s_sc_total', usd)) calcScHoy();
     }
 
-    // Privados SC
-    if (result.privadoTokens > 0 && result.privBreakdown && result.privBreakdown.length > 0) {
-      const n = document.getElementById('s_sc_priv_n');
-      if (n) { n.value = result.privadoSesiones || result.privBreakdown.length; n.style.borderColor = 'var(--gold)'; }
-
-      const tipo = document.getElementById('s_sc_priv_tipo');
-      if (tipo) {
+    if (result.privadoTokens > 0) {
+      _fillAnz('s_sc_priv_n', result.privadoSesiones || (result.privBreakdown ? result.privBreakdown.length : 1));
+      _fillAnz('s_sc_priv_dur', result.privadoCount);
+      const tipoEl = document.getElementById('s_sc_priv_tipo');
+      if (tipoEl && result.privBreakdown && result.privBreakdown.length && (String(tipoEl.value||'').trim()==='' || tipoEl.dataset.autofill==='1')) {
         const hasExcl = result.privBreakdown.some(p => p.tipo.toLowerCase().includes('exclusivo'));
         const hasReg  = result.privBreakdown.some(p => p.tipo.toLowerCase().includes('regular') || p.tipo.toLowerCase().includes('show'));
-        if (hasExcl && hasReg) tipo.value = 'Ambos';
-        else if (hasExcl) tipo.value = 'Exclusivo (60 tk/min)';
-        else tipo.value = 'Regular (30-32 tk/min)';
-        tipo.style.borderColor = 'var(--gold)';
+        tipoEl.value = (hasExcl && hasReg) ? 'Ambos' : (hasExcl ? 'Exclusivo (60 tk/min)' : 'Regular (30-32 tk/min)');
+        tipoEl.dataset.autofill = '1'; flashField(tipoEl);
       }
-
-      const dur = document.getElementById('s_sc_priv_dur');
-      if (dur) { dur.value = result.privadoCount; dur.style.borderColor = 'var(--gold)'; }
-
-      // Reset border colors
-      ['s_sc_total','s_sc_priv_n','s_sc_priv_dur'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) setTimeout(() => el.style.borderColor = '', 3000);
-      });
     }
 
-    // Top tipper SC
     if (result.topTippers && result.topTippers.length > 0) {
-      const tippersEl = document.getElementById('s_tippers');
       const top = result.topTippers[0];
-      const scLine = top[0] + ' · ' + top[1] + ' tk (SC)';
-      if (tippersEl) {
-        const existing = tippersEl.value.trim();
-        if (existing && !existing.includes('(SC)')) {
-          tippersEl.value = existing + '\n' + scLine;
-        } else if (!existing) {
-          tippersEl.value = scLine;
-        }
-        flashField(tippersEl);
-      }
+      _addTipperLine(top[0] + ' · ' + top[1] + ' tk (SC)', '(SC)');
     }
-
     showAnzFillNotif('SC', 'Reporte');
   }
 
-  // Navigate to reporte section
-  setTimeout(() => {
-    const repTab = document.querySelector('.nav-item[onclick*="reporte"]');
-    if (repTab) {
-      // Don't auto-navigate — just show notification
+  // Tras autocompletar, refrescar las referencias de los campos
+  if (typeof updateFieldRefs === 'function') updateFieldRefs();
+  if (typeof updateToggleRefs === 'function') updateToggleRefs();
+}
+
+// ── ACUMULAR DIARIOS → SEMANAL / MENSUAL ─────────────────────────────
+// Suma/promedia los reportes DIARIOS que caen dentro del periodo indicado y
+// rellena los campos del reporte semanal/mensual marcados con `acc` en
+// FIELD_HELP. No pisa valores manuales (usa _fillAnz). El periodo se toma de
+// las fechas del propio formulario (w_desde/w_hasta · m_mes/m_anio).
+const _MES_NUM = {enero:1,febrero:2,marzo:3,abril:4,mayo:5,junio:6,julio:7,agosto:8,septiembre:9,octubre:10,noviembre:11,diciembre:12,
+  ene:1,feb:2,mar:3,abr:4,may:5,jun:6,jul:7,ago:8,sep:9,sept:9,oct:10,nov:11,dic:12};
+
+function _dailyReportsInRange(fromISO, toISO) {
+  // devuelve los objetos de reportes diarios cuya fecha está en [fromISO, toISO]
+  const keys = _store.keys().filter(k => k.startsWith('tm_stream_')).sort();
+  const out = [];
+  for (const k of keys) {
+    try {
+      const d = JSON.parse(_store.getItem(k));
+      if (!d || !d.fecha) continue;
+      if ((!fromISO || d.fecha >= fromISO) && (!toISO || d.fecha <= toISO)) out.push(d);
+    } catch(e) {}
+  }
+  return out;
+}
+
+function aplicarAcumulados(periodo) {
+  let fromISO = null, toISO = null, label = '';
+  if (periodo === 'week') {
+    fromISO = (document.getElementById('w_desde')||{}).value || null;
+    toISO   = (document.getElementById('w_hasta')||{}).value || null;
+    if (!fromISO) { alert('Primero indica la fecha de inicio de la semana (campo "Semana del").'); return; }
+    label = 'semana';
+  } else {
+    const mesTxt = ((document.getElementById('m_mes')||{}).value||'').trim().toLowerCase();
+    const anio   = parseInt(((document.getElementById('m_anio')||{}).value||'').trim(), 10);
+    const mesNum = _MES_NUM[mesTxt];
+    if (!mesNum || !anio) { alert('Primero indica el mes y el año del reporte.'); return; }
+    fromISO = `${anio}-${String(mesNum).padStart(2,'0')}-01`;
+    const lastDay = new Date(anio, mesNum, 0).getDate();
+    toISO = `${anio}-${String(mesNum).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+    label = 'mes';
+  }
+
+  const daily = _dailyReportsInRange(fromISO, toISO);
+  if (!daily.length) {
+    alert(`No hay reportes diarios guardados dentro de ${label === 'semana' ? 'esa semana' : 'ese mes'} (${fromISO} → ${toISO}). Guarda primero los reportes diarios del periodo.`);
+    return;
+  }
+
+  const prefix = periodo === 'week' ? 'w_' : 'm_';
+  const num = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
+  let llenados = 0;
+
+  Object.keys(FIELD_HELP).forEach(id => {
+    if (!id.startsWith(prefix)) return;
+    const meta = FIELD_HELP[id];
+    if (!meta || !meta.acc) return;
+    let val = null;
+    if (meta.acc === 'count_streams') {
+      val = daily.length; // nº de reportes diarios = streams del periodo
+    } else if (meta.acc.startsWith('sum:')) {
+      const field = meta.acc.slice(4);
+      val = daily.reduce((s,d) => s + num(d[field]), 0);
+      // redondear bonito: enteros para conteos, 2 decimales para dinero
+      val = Math.round(val * 100) / 100;
+    } else if (meta.acc.startsWith('last:')) {
+      const field = meta.acc.slice(5);
+      for (let i = daily.length - 1; i >= 0; i--) {
+        if (daily[i][field] !== undefined && String(daily[i][field]).trim() !== '') { val = daily[i][field]; break; }
+      }
+    } else if (meta.acc.startsWith('avg:')) {
+      const field = meta.acc.slice(4);
+      const vals = daily.map(d => num(d[field])).filter(v => v > 0);
+      val = vals.length ? Math.round(vals.reduce((s,v)=>s+v,0) / vals.length * 100) / 100 : null;
     }
-  }, 500);
+    if (val !== null && val !== undefined && !(typeof val === 'number' && isNaN(val))) {
+      if (_fillAnz(id, val)) llenados++;
+    }
+  });
+
+  // Recalcular pago SC si aplica
+  if (periodo === 'week' && typeof calcScPago === 'function') calcScPago();
+  if (typeof updateFieldRefs === 'function') updateFieldRefs();
+  if (typeof updateToggleRefs === 'function') updateToggleRefs();
+
+  showAnzFillNotif(label === 'semana' ? 'Semanal' : 'Mensual',
+    `${llenados} campos calculados de ${daily.length} reporte(s) diario(s)`);
 }
 
 function showAnzFillNotif(plat, section) {
@@ -7566,9 +7938,13 @@ function showAnzFillNotif(plat, section) {
     toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--gold);border-radius:8px;padding:12px 16px;font-family:var(--mono);font-size:11px;color:var(--gold);z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;';
     document.body.appendChild(toast);
   }
-  toast.textContent = '✓ Datos ' + plat + ' enviados al Reporte Post-stream';
+  // Si section trae un texto descriptivo (con espacios), úsalo tal cual;
+  // si es una etiqueta corta, arma el mensaje por defecto.
+  toast.textContent = (section && /\s/.test(section))
+    ? '✓ ' + plat + ': ' + section
+    : '✓ Datos ' + plat + ' enviados al Reporte Post-stream';
   toast.style.opacity = '1';
-  setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+  setTimeout(() => { toast.style.opacity = '0'; }, 3200);
 }
 
 // ── RECOMMENDATION ENGINE ────────────────────────────────────────────
@@ -7982,10 +8358,27 @@ async function sbLoadAll() {
     if (typeof loadRecFromLastReport === 'function') loadRecFromLastReport();
     if (typeof loadLatestDashboard === 'function') loadLatestDashboard();
     if (typeof loadDashboardFromReports === 'function') loadDashboardFromReports();
+    // Tras sincronizar desde la nube, refrescar las referencias (placeholders
+    // con el último valor real) sin rellenar ni seleccionar nada en el formulario.
+    if (typeof updateFieldRefs === 'function') updateFieldRefs();
+  if (typeof updateToggleRefs === 'function') updateToggleRefs();
+    if (typeof updateToggleRefs === 'function') updateToggleRefs();
   } catch(e) {
     sbSetStatus('● error al sincronizar', 'var(--rose)');
     console.error('SB load error:', e);
   }
+}
+
+// ¿El usuario ya tiene algo escrito en algún formulario de reporte?
+// (campos clave que indican edición manual en curso). Si es así, no
+// sobrescribimos con la restauración automática desde la nube.
+function _userHasEditedReport() {
+  const probes = ['s_cb_tk','s_sc_total','s_show','w_cb_tk','w_sc_total','m_cb_tk','m_sc_total'];
+  for (const id of probes) {
+    const el = document.getElementById(id);
+    if (el && String(el.value||'').trim() !== '') return true;
+  }
+  return false;
 }
 // ══════════════════════════════════════════
 // ANALIZADOR CB + SC
@@ -8012,114 +8405,146 @@ function anzShowError(plat, msg) {
 
 // ── CB PARSER ──────────────────────────────────────────────────────
 function anzParseCB(text) {
-  // CB format (copied from browser):
-  // "DATE\t\nACTION\nTOKENS\tBALANCE"  OR  "DATE\t\nACTION\nTOKENS\tBALANCE"
-  // Tokens and balance are on the same line separated by \t
-  // Date line ends with \t (artifact of table copy)
+  // Parser robusto para el historial de tokens de Chaturbate.
+  // Soporta DOS formatos de pegado:
+  //   (A) Tabla tab-separada: una fila = "FECHA\tACCIÓN\tTOKENS\tSALDO"
+  //       (la acción puede faltar; el saldo puede faltar)
+  //   (B) Multilínea: FECHA \n ACCIÓN \n [mensajes...] \n TOKENS[\tSALDO]
+  // Tolera: fechas "1 de noviembre de 2026" y "1 nov 2026"; hora 12h con
+  //         "a. m."/"p. m." (incluido el espacio duro NBSP  ); filas sin
+  //         mensaje; emojis; tokens negativos (reembolsos).
 
-  const lines = text.split('\n').map(l => l.trim()).filter(l => l !== '');
+  // Normalizar espacios duros (NBSP) y de ancho fino a espacio normal
+  const norm = s => s.replace(/[   ]/g, ' ');
+  const rawLines = norm(text).split('\n');
+
+  // Regex de fecha: día + mes (nombre completo o abreviado, con o sin "de") + año + hora 12h
+  // Ej: "1 de noviembre de 2026, 9:05 p. m."  |  "1 nov 2026, 9:05 p. m."  |  "1 nov. 2026, 9:05 pm"
+  const MESES = 'ene|enero|feb|febrero|mar|marzo|abr|abril|may|mayo|jun|junio|jul|julio|ago|agosto|sep|sept|septiembre|oct|octubre|nov|noviembre|dic|diciembre';
+  const dateCore = `\\d{1,2}\\s+(?:de\\s+)?(?:${MESES})\\.?\\s+(?:de\\s+)?\\d{4},?\\s+\\d{1,2}:\\d{2}(?::\\d{2})?\\s*(?:[ap])\\.?\\s*m\\.?`;
+  const dateRe   = new RegExp('^\\s*(' + dateCore + ')\\s*$', 'i');          // línea = SOLO fecha
+  const dateLead = new RegExp('^\\s*(' + dateCore + ')', 'i');               // fila que EMPIEZA con fecha (tab-sep)
+
+  // Una línea "solo tokens" o "tokens\tsaldo"
+  const tokenBalRe  = /^(-?\d[\d.,]*)\t+(-?\d[\d.,]*)$/;
+  const tokenOnlyRe = /^-?\d[\d.,]*$/;
+  const toInt = s => parseInt(String(s).replace(/[.,\s]/g,''), 10);
+
   const entries = [];
-  let i = 0;
 
-  const dateRe = /^\d{1,2} de \w+ de \d{4},\s+\d{1,2}:\d{2}\s+[ap]\.\s*m\.$/i;
-  const tokenBalRe = /^(-?\d+)\t(\d+)$/;
-  const tokenOnlyRe = /^-?\d+$/;
+  // Extrae el nombre de usuario de una acción tipo "Propina de: USER — mensaje"
+  // Corta en el separador de mensaje (— guion largo, – guion medio, o " - ").
+  function extractUser(action){
+    const m = action.match(/de:\s*(.+)/i) || action.match(/:\s*(.+)/);
+    if (!m) return 'An\u00f3nimo';
+    let u = m[1].trim();
+    // cortar el mensaje que CB adjunta tras un guion
+    u = u.split(/\s+[\u2014\u2013-]\s+/)[0].trim();
+    // por si viniera con comillas o espacios raros
+    return u || 'An\u00f3nimo';
+  }
 
-  while (i < lines.length) {
-    const line = lines[i];
-
-    // Skip header
-    if (line.includes('Fecha') && (line.includes('Acción') || line.includes('Tokens'))) { i++; continue; }
-
-    if (dateRe.test(line)) {
-      const date = line; i++;
+  // ---- Intento 1: formato TABLA (cada fila con tabs) ----
+  // Si hay varias líneas que empiezan con fecha y contienen tabs, es formato tabla.
+  const tabRows = rawLines.filter(l => dateLead.test(l) && l.indexOf('\t') !== -1);
+  if (tabRows.length) {
+    for (const row of rawLines) {
+      if (!dateLead.test(row) || row.indexOf('\t') === -1) continue;
+      // separar por tabs (colapsando tabs múltiples vacíos)
+      const cols = row.split('\t').map(c => c.trim()).filter((c,idx,arr) => !(c === '' ));
+      // cols[0] = fecha ; el último numérico = saldo ; el penúltimo numérico = tokens
+      const dm = row.match(dateLead);
+      const date = dm ? dm[1].trim() : (cols[0]||'');
+      // recoger los campos numéricos puros al final de la fila
+      const nums = [];
+      for (let k = cols.length - 1; k >= 0 && nums.length < 2; k--) {
+        if (/^-?\d[\d.,]*$/.test(cols[k])) nums.unshift(cols[k]); else break;
+      }
+      let tokens = 0, balance = null;
+      if (nums.length === 2) { tokens = toInt(nums[0]); balance = toInt(nums[1]); }
+      else if (nums.length === 1) { tokens = toInt(nums[0]); }
+      // acción = lo que está entre la fecha y los números
+      // reconstruir: quitar fecha del inicio y los numéricos del final
       let action = '';
-      let tokens = 0;
-      let balance = null;
-
-      // Next line: action text (e.g. "Propina de: USER")
-      if (i < lines.length && !dateRe.test(lines[i]) && !tokenBalRe.test(lines[i]) && !tokenOnlyRe.test(lines[i])) {
-        action = lines[i]; i++;
+      // la acción es la 2ª columna (índice 1) si existe y no es numérica
+      if (cols.length >= 2 && !/^-?\d[\d.,]*$/.test(cols[1])) action = cols[1];
+      else {
+        // fallback: texto entre fecha y primer número
+        const afterDate = row.replace(dateLead, '').replace(/^\t+/, '');
+        action = afterDate.split('\t').filter(c => c && !/^-?\d[\d.,]*$/.test(c.trim()))[0] || '';
+        action = action.trim();
       }
-
-      // Skip any chat-message lines between the action and the TOKENS\tBALANCE line.
-      // Messages are free text (not numbers, not dates, not token/balance lines).
-      // We advance until we hit the token line OR the next date (whichever comes first).
-      while (i < lines.length &&
-             !dateRe.test(lines[i]) &&
-             !tokenBalRe.test(lines[i]) &&
-             !tokenOnlyRe.test(lines[i])) {
-        i++; // skip message line
-      }
-
-      // Now: "TOKENS\tBALANCE" or just "TOKENS"
-      if (i < lines.length) {
-        const m = lines[i].match(/^(-?\d+)\t(\d+)$/);
-        if (m) {
-          tokens = parseInt(m[1]);
-          balance = parseInt(m[2]);
-          i++;
-        } else if (tokenOnlyRe.test(lines[i])) {
-          tokens = parseInt(lines[i]); i++;
-          // Maybe balance on next line
-          if (i < lines.length && /^\d+$/.test(lines[i])) {
-            balance = parseInt(lines[i]); i++;
-          }
-        }
-      }
-
       if (tokens !== 0 || balance !== null) {
         entries.push({ date, action, tokens, balance });
       }
-    } else {
-      i++;
+    }
+  }
+
+  // ---- Intento 2: formato MULTILÍNEA (si la tabla no dio entradas) ----
+  if (!entries.length) {
+    const lines = rawLines.map(l => l.trim()).filter(l => l !== '');
+    let i = 0;
+    while (i < lines.length) {
+      const line = lines[i];
+      if (line.includes('Fecha') && (line.includes('Acción') || line.includes('Tokens'))) { i++; continue; }
+      if (dateRe.test(line)) {
+        const date = line; i++;
+        let action = '', tokens = 0, balance = null;
+        if (i < lines.length && !dateRe.test(lines[i]) && !tokenBalRe.test(lines[i]) && !tokenOnlyRe.test(lines[i])) {
+          action = lines[i]; i++;
+        }
+        while (i < lines.length && !dateRe.test(lines[i]) && !tokenBalRe.test(lines[i]) && !tokenOnlyRe.test(lines[i])) { i++; }
+        if (i < lines.length) {
+          const m = lines[i].match(tokenBalRe);
+          if (m) { tokens = toInt(m[1]); balance = toInt(m[2]); i++; }
+          else if (tokenOnlyRe.test(lines[i])) {
+            tokens = toInt(lines[i]); i++;
+            if (i < lines.length && /^-?\d[\d.,]*$/.test(lines[i])) { balance = toInt(lines[i]); i++; }
+          }
+        }
+        if (tokens !== 0 || balance !== null) entries.push({ date, action, tokens, balance });
+      } else { i++; }
     }
   }
 
   if (!entries.length) return null;
 
-  // Sort by balance ascending to find min (first real entry) and max
   const withBalance = entries.filter(e => e.balance !== null);
-  if (!withBalance.length) return null;
-
-  // CB shows newest first → last entry in array = oldest transaction
-  // Balance inicial = saldo de la fila más antigua (el número más bajo registrado)
-  // Balance final   = saldo de la fila más reciente con tokens positivos
-  // Tokens ganados  = balanceFinal − balanceInicial (simple)
-
-  const positiveEntries = withBalance.filter(e => e.tokens > 0);
+  const positiveEntries = entries.filter(e => e.tokens > 0);
   if (!positiveEntries.length) return null;
 
-  // Oldest entry (last in array, CB newest-first)
-  const oldestEntry = positiveEntries[positiveEntries.length - 1];
-  // El balance de la entrada más antigua YA incluye su propio tip.
-  // El balance REAL antes de empezar = balance de esa entrada − sus tokens.
-  const balanceInicialAjustado = oldestEntry.balance - oldestEntry.tokens;
+  // Balance final/inicial y tokens ganados
+  let balanceFinal, balanceInicialAjustado, tokensGanados;
+  if (withBalance.length) {
+    // CB lista de más nuevo a más viejo → el saldo MÁS ALTO suele ser el más reciente
+    // y el MÁS BAJO el más antiguo. Usamos min/max de saldo para robustez ante el orden.
+    const balances = withBalance.map(e => e.balance);
+    const maxBal = Math.max(...balances);
+    const minBal = Math.min(...balances);
+    // la entrada con saldo mínimo: su saldo YA incluye su propio tip → saldo real previo = min - sus tokens
+    const minEntry = withBalance.find(e => e.balance === minBal);
+    balanceInicialAjustado = minBal - (minEntry ? minEntry.tokens : 0);
+    balanceFinal = maxBal;
+    tokensGanados = balanceFinal - balanceInicialAjustado;
+    // Verificación: si no cuadra con la suma de tips, usar la suma (más fiable)
+    const suma = positiveEntries.reduce((s,e)=>s+e.tokens,0);
+    if (tokensGanados <= 0 || Math.abs(tokensGanados - suma) > suma * 0.5) {
+      tokensGanados = suma;
+    }
+  } else {
+    tokensGanados = positiveEntries.reduce((s,e)=>s+e.tokens,0);
+    balanceFinal = tokensGanados;
+    balanceInicialAjustado = 0;
+  }
 
-  // Newest entry with positive tokens = balance final
-  const newestEntry = positiveEntries[0];
-  const balanceFinal = newestEntry.balance;
-
-  // Tokens ganados = diferencia de balance. Ahora coincide exactamente
-  // con la suma de todas las propinas porque el balance inicial está bien ajustado.
-  const tokensGanados = balanceFinal - balanceInicialAjustado;
-
-  // Categorize
+  // ===== Categorización (idéntica a la versión previa) =====
   const cats = {};
   const tippers = {};
-  let privadoTokens = 0;
-  let privadoCount = 0; // sessions (groups of consecutive private mins)
-  let privadoMinutos = 0;
+  let privadoTokens = 0, privadoMinutos = 0, spyTokens = 0, spyCount = 0, privadoTipsExtra = 0;
   let privadoTimestamps = new Set();
-  let spyTokens = 0;
-  let spyCount = 0;
-  let privadoTipsExtra = 0;
 
-  // Detectar propinas DENTRO del privado: una "Propina de: USER" cuenta como
-  // propina-en-privado si ocurre mientras hay un privado activo del mismo usuario.
-  // Para eso, primero marcamos qué entradas son privado y de quién (orden cronológico).
-  const chrono = entries.slice().reverse(); // oldest first
-  const enPrivadoFlag = new Map(); // index en chrono -> bool (propina dentro de privado)
+  const chrono = entries.slice().reverse();
+  const enPrivadoFlag = new Map();
   {
     let activePrivUser = null;
     for (let idx = 0; idx < chrono.length; idx++) {
@@ -8130,139 +8555,61 @@ function anzParseCB(text) {
         || a.includes('emisión privada') || (a.includes('privad') && !a.includes('propina') && !a.includes('espía') && !a.includes('espia') && !a.includes('spy')));
       const esEspia = a.includes('espía') || a.includes('espia') || a.includes('spy');
       const esPropina = a.includes('propina');
-      const um = e.action.match(/:\s*(.+)/);
-      const evUser = um ? um[1].trim() : 'Anónimo';
-      if (esPrivTiempo && !esEspia) {
-        activePrivUser = evUser;
-      } else if (esPropina && activePrivUser && evUser === activePrivUser) {
-        enPrivadoFlag.set(idx, true); // propina dentro del privado activo
-      } else if (!esEspia) {
-        // cualquier otro evento (que no sea espía) cierra el privado
-        activePrivUser = null;
-      }
+      const evUser = extractUser(e.action);
+      if (esPrivTiempo && !esEspia) { activePrivUser = evUser; }
+      else if (esPropina && activePrivUser && evUser === activePrivUser) { enPrivadoFlag.set(idx, true); }
+      else if (!esEspia) { activePrivUser = null; }
     }
   }
-
   for (let idx = 0; idx < chrono.length; idx++) {
     const e = chrono[idx];
     if (e.tokens <= 0) continue;
     const a = e.action.toLowerCase();
-
-    // Emisión espía (español) o spy (inglés) — otro usuario espía el privado
     if (a.includes('espía') || a.includes('espia') || a.includes('spy')) {
-      spyTokens += e.tokens;
-      spyCount++;
-      cats['Emisión espía'] = (cats['Emisión espía'] || 0) + e.tokens;
-      // Nota: el espía no se suma al ranking de tippers (no es propina directa)
-    }
-    // Show privado / privado (tiempo del privado)
-    else if (a.includes('show privado') || a.includes('emisión prémium privada')
-             || a.includes('emisión privada')
-             || (a.includes('privad') && !a.includes('propina'))) {
-      privadoTokens += e.tokens;
-      privadoTimestamps.add(e.date);
-      cats['Privado'] = (cats['Privado'] || 0) + e.tokens;
-      // Nota: el tiempo del privado NO se suma al ranking de tippers
-      // (es el pago del show, no una propina). Las propinas del usuario
-      // durante el privado sí se cuentan en su categoría aparte.
-    }
-    // Propina — puede ser pública o DENTRO del privado
-    else if (a.includes('propina')) {
-      const m = e.action.match(/de:\s*(.+)/i);
-      const user = m ? m[1].trim() : 'Anónimo';
-      if (user && user !== 'Anónimo') tippers[user] = (tippers[user] || 0) + e.tokens;
-      if (enPrivadoFlag.get(idx)) {
-        // propina dada durante el privado
-        privadoTipsExtra += e.tokens;
-        cats['Propina en privado'] = (cats['Propina en privado'] || 0) + e.tokens;
-      } else {
-        cats['Propinas'] = (cats['Propinas'] || 0) + e.tokens;
-      }
-    }
-    else if (a.includes('goal') || a.includes('objetivo')) {
-      cats['Goals'] = (cats['Goals'] || 0) + e.tokens;
-    }
-    else if (a.includes('fan club') || a.includes('suscripción')) {
-      cats['Fan Club'] = (cats['Fan Club'] || 0) + e.tokens;
-    }
-    else {
-      cats['Otros'] = (cats['Otros'] || 0) + e.tokens;
-    }
+      spyTokens += e.tokens; spyCount++; cats['Emisión espía'] = (cats['Emisión espía']||0)+e.tokens;
+    } else if (a.includes('show privado') || a.includes('emisión prémium privada') || a.includes('emisión privada') || (a.includes('privad') && !a.includes('propina'))) {
+      privadoTokens += e.tokens; privadoTimestamps.add(e.date); cats['Privado'] = (cats['Privado']||0)+e.tokens;
+    } else if (a.includes('propina')) {
+      const user = extractUser(e.action);
+      if (user && user !== 'An\u00f3nimo') tippers[user] = (tippers[user]||0)+e.tokens;
+      if (enPrivadoFlag.get(idx)) { privadoTipsExtra += e.tokens; cats['Propina en privado'] = (cats['Propina en privado']||0)+e.tokens; }
+      else { cats['Propinas'] = (cats['Propinas']||0)+e.tokens; }
+    } else if (a.includes('goal') || a.includes('objetivo')) { cats['Goals'] = (cats['Goals']||0)+e.tokens; }
+    else if (a.includes('fan club') || a.includes('suscripción')) { cats['Fan Club'] = (cats['Fan Club']||0)+e.tokens; }
+    else { cats['Otros'] = (cats['Otros']||0)+e.tokens; }
   }
 
-  // Duración del privado en minutos.
-  // CB registra la hora con precisión de minuto y suele loguear varias entradas
-  // por minuto. Contamos los MINUTOS ÚNICOS (marcas de tiempo distintas).
-  // Si por el formato todas cayeran en el mismo minuto pero hay muchas entradas,
-  // estimamos por cantidad de entradas (CB ~6 fracciones/min como piso).
   let privadoEntradas = 0;
   for (const e of entries) {
     if (e.tokens <= 0) continue;
     const aa = e.action.toLowerCase();
-    const esP = (aa.includes('show privado') || aa.includes('emisión prémium privada')
-      || aa.includes('emisión privada') || (aa.includes('privad') && !aa.includes('propina')))
-      && !(aa.includes('espía') || aa.includes('espia') || aa.includes('spy'));
+    const esP = (aa.includes('show privado') || aa.includes('emisión prémium privada') || aa.includes('emisión privada') || (aa.includes('privad') && !aa.includes('propina'))) && !(aa.includes('espía')||aa.includes('espia')||aa.includes('spy'));
     if (esP) privadoEntradas++;
   }
   let privMinutos = privadoTimestamps.size;
-  // Si las marcas de tiempo no dan granularidad (1 min) pero hay muchas entradas,
-  // estimamos con 6 entradas/min (comportamiento típico de CB en privados).
-  if (privMinutos <= 1 && privadoEntradas > 6) {
-    privMinutos = Math.max(1, Math.round(privadoEntradas / 6));
-  }
+  if (privMinutos <= 1 && privadoEntradas > 6) privMinutos = Math.max(1, Math.round(privadoEntradas/6));
 
-  // Count SESSIONS: consecutive private entries by the same user = 1 session.
-  // A tip "Propina de: USER" during an active private does NOT break it (same user).
-  // A different user, or a non-private/non-tip event, breaks the session.
-  let sessions = 0;
-  let inPriv = false;
-  let lastPrivUser = null;
-  for (const e of entries.slice().reverse()) { // oldest first
+  let sessions = 0, inPriv = false, lastPrivUser = null;
+  for (const e of entries.slice().reverse()) {
     if (e.tokens <= 0) continue;
     const a = e.action.toLowerCase();
-    const esEspia = a.includes('espía') || a.includes('espia') || a.includes('spy');
-    // Privado = show privado / privada / emisión privada (NO espía, NO propina)
-    const isPriv = (a.includes('show privado') || a.includes('emisión prémium privada')
-      || a.includes('emisión privada') || (a.includes('privad') && !a.includes('propina')))
-      && !esEspia;
-    const um = e.action.match(/:\s*(.+)/);
-    const evUser = um ? um[1].trim() : 'Anónimo';
+    const esEspia = a.includes('espía')||a.includes('espia')||a.includes('spy');
+    const isPriv = (a.includes('show privado')||a.includes('emisión prémium privada')||a.includes('emisión privada')||(a.includes('privad')&&!a.includes('propina'))) && !esEspia;
+    const evUser = extractUser(e.action);
     const isTip = a.includes('propina');
-
-    if (isPriv) {
-      if (!inPriv || evUser !== lastPrivUser) { sessions++; }
-      inPriv = true;
-      lastPrivUser = evUser;
-    } else if (isTip && inPriv && evUser === lastPrivUser) {
-      // propina durante el privado activo del mismo usuario — la sesión continúa
-    } else if (esEspia) {
-      // una emisión espía no rompe el privado activo
-    } else {
-      inPriv = false;
-      lastPrivUser = null;
-    }
+    if (isPriv) { if (!inPriv || evUser !== lastPrivUser) sessions++; inPriv = true; lastPrivUser = evUser; }
+    else if (isTip && inPriv && evUser === lastPrivUser) {}
+    else if (esEspia) {}
+    else { inPriv = false; lastPrivUser = null; }
   }
   if (sessions === 0 && privadoTokens > 0) sessions = 1;
 
-  // Top tippers sorted
-  const topTippers = Object.entries(tippers)
-    .sort((a,b) => b[1]-a[1])
-    .slice(0, 10);
+  const topTippers = Object.entries(tippers).sort((a,b)=>b[1]-a[1]).slice(0,10);
 
   return {
-    balanceInicial: balanceInicialAjustado,
-    balanceInicialAjustado,
-    balanceFinal,
-    tokensGanados,
-    cats,
-    topTippers,
-    privadoTokens,
-    privadoMinutos: privMinutos,
-    privadoSesiones: sessions,
-    privadoTipsExtra,
-    spyTokens,
-    spyCount,
-    totalEntries: entries.filter(e=>e.tokens>0).length
+    balanceInicial: balanceInicialAjustado, balanceInicialAjustado, balanceFinal, tokensGanados,
+    cats, topTippers, privadoTokens, privadoMinutos: privMinutos, privadoSesiones: sessions,
+    privadoTipsExtra, spyTokens, spyCount, totalEntries: positiveEntries.length
   };
 }
 
