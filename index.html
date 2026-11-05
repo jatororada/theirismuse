@@ -12,9 +12,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="theirismuse">
-<link rel="apple-touch-icon" href="./icon-180.png">
+<link rel="apple-touch-icon" href="./icon-180.png?v=3">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20width%3D%22512%22%20height%3D%22512%22%20viewBox%3D%220%200%20512%20512%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22bg%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%2321222d%22/%3E%3Cstop%20offset%3D%220.55%22%20stop-color%3D%22%23171821%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23141520%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20x%3D%220%22%20y%3D%220%22%20width%3D%22512%22%20height%3D%22512%22%20rx%3D%22116%22%20fill%3D%22url%28%23bg%29%22/%3E%3Ctext%20x%3D%22256%22%20y%3D%22238%22%20font-family%3D%22Georgia%2C%20serif%22%20font-size%3D%22215%22%20font-weight%3D%22600%22%20font-style%3D%22italic%22%20fill%3D%22%23a9dfd8%22%20text-anchor%3D%22middle%22%20dominant-baseline%3D%22central%22%3Etm%3C/text%3E%3Crect%20x%3D%22150%22%20y%3D%22340%22%20width%3D%22212%22%20height%3D%2210%22%20rx%3D%225%22%20fill%3D%22%23a9dfd8%22%20opacity%3D%220.5%22/%3E%3C/svg%3E">
-  <link rel="icon" type="image/png" href="./icon-192.png">
+  <link rel="icon" type="image/png" href="./icon-192.png?v=3">
 <title>theirismuse — Sistema Completo v2.0</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -5389,8 +5389,8 @@ function setHeaderSync(state, count) {
 function notifShow(title, body, accion) {
   const opts = {
     body: body,
-    icon: './icon-192.png',
-    badge: './icon-192.png',
+    icon: './icon-192.png?v=3',
+    badge: './icon-192.png?v=3',
     tag: 'tm-plan-' + (accion ? accion.hora : Date.now()),
     requireInteraction: false,
     vibrate: [200, 100, 200],
@@ -7263,10 +7263,10 @@ function saveStreamReport() {
   btn.classList.add('saved');
   setTimeout(() => { btn.textContent = '💾 Guardar reporte'; btn.classList.remove('saved'); }, 2500);
 
-  // Update dashboard live
-  applyDashboardUpdate(data);
-  updateAllDashboard(data, null);
+  // Recalcular el dashboard de forma DETERMINISTA desde los reportes guardados
+  // (no sumar incrementalmente, para que todos los dispositivos coincidan).
   renderRecommendations(data);
+  loadDashboardFromReports();
 
   renderStreamHistory();
   if (typeof renderDashCharts === 'function') renderDashCharts();
@@ -7366,14 +7366,6 @@ function saveWeekReport() {
     sc_stripscore: getVal('w_sc_stripscore'),
     sc_rating:     getVal('w_sc_rating')
   };
-  applyDashboardUpdate(_wdata);
-  // OF total directo (el reporte semanal da el total, no incremento)
-  if (getVal('w_of_total')) {
-    const ofT = parseInt(getVal('w_of_total'));
-    const setOf = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
-    setOf('dash_of_subs', ofT);
-    setOf('kpi_of_subs', ofT);
-  }
   const data = {
     desde: getVal('w_desde'), hasta: getVal('w_hasta'),
     streams: getVal('w_streams'), horas: getVal('w_horas'),
@@ -7400,6 +7392,8 @@ function saveWeekReport() {
   const btn = document.getElementById('btnSaveWeek');
   btn.textContent = '✓ Guardado'; btn.classList.add('saved');
   setTimeout(() => { btn.textContent = '💾 Guardar reporte semanal'; btn.classList.remove('saved'); }, 2500);
+  // Recalcular el dashboard de forma determinista desde los reportes guardados.
+  loadDashboardFromReports();
   renderWeekHistory();
   if (typeof renderDashCharts === 'function') renderDashCharts();
   if (typeof updateFieldRefs === 'function') updateFieldRefs();
@@ -7486,23 +7480,6 @@ function loadWeekReport(key, _noScroll) {
 
 // ── SAVE MONTH REPORT ────────────────────────────────────────────────
 function saveMonthReport() {
-  // Map monthly fields to dashboard update format
-  const _mdata = {
-    cb_total_fans: getVal('m_cb_fans_end'),
-    sc_total_fans: getVal('m_sc_fans_end'),
-    sc_30h:        getVal('m_sc_30h'),
-    cb_fc_total:   getVal('m_cb_fc'),
-    sc_fc_total:   getVal('m_sc_fc'),
-    sc_rating:     getVal('m_sc_rating')
-  };
-  applyDashboardUpdate(_mdata);
-  // OF total directo (el reporte mensual da el total)
-  if (getVal('m_of_total')) {
-    const ofT = parseInt(getVal('m_of_total'));
-    const setOf = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
-    setOf('dash_of_subs', ofT);
-    setOf('kpi_of_subs', ofT);
-  }
   const data = {
     mes: getVal('m_mes'), anio: getVal('m_anio'),
     streams: getVal('m_streams'), premium: getVal('m_premium'),
@@ -7524,6 +7501,8 @@ function saveMonthReport() {
   const btn = document.getElementById('btnSaveMonth');
   btn.textContent = '✓ Guardado'; btn.classList.add('saved');
   setTimeout(() => { btn.textContent = '💾 Guardar reporte mensual'; btn.classList.remove('saved'); }, 2500);
+  // Recalcular el dashboard de forma determinista desde los reportes guardados.
+  loadDashboardFromReports();
   renderMonthHistory();
   if (typeof renderDashCharts === 'function') renderDashCharts();
   if (typeof updateFieldRefs === 'function') updateFieldRefs();
@@ -9720,15 +9699,89 @@ function renderDashCharts(){
 }
 
 
+// Devuelve el último valor NO vacío de un campo, buscando en los reportes del
+// tipo indicado ordenados por fecha de guardado (ts) o por clave, del más
+// reciente al más viejo. Determinista: siempre da el mismo resultado para los
+// mismos reportes, en cualquier dispositivo.
+function _latestField(prefix, field) {
+  const keys = _store.keys().filter(k => k.startsWith(prefix));
+  // ordenar por ts (si existe) y, en empate, por clave — descendente
+  const rows = [];
+  keys.forEach(k => { try { const o = JSON.parse(_store.getItem(k)); if (o) rows.push({ k: k, o: o }); } catch(e) {} });
+  rows.sort((a, b) => {
+    const ta = (typeof a.o.ts === 'number') ? a.o.ts : 0;
+    const tb = (typeof b.o.ts === 'number') ? b.o.ts : 0;
+    if (tb !== ta) return tb - ta;
+    return a.k < b.k ? 1 : (a.k > b.k ? -1 : 0);
+  });
+  for (let i = 0; i < rows.length; i++) {
+    const v = rows[i].o[field];
+    if (v !== undefined && v !== null && String(v).trim() !== '') return v;
+  }
+  return null;
+}
+
+// Reconstruye TODO el dashboard de forma DETERMINISTA desde los reportes
+// guardados. No lee valores de la pantalla ni suma incrementalmente, así que
+// el resultado es idéntico en todos los dispositivos con los mismos datos.
 function loadDashboardFromReports() {
   try {
-    const sKeys = _store.keys().filter(k => k.startsWith('tm_stream_')).sort().reverse();
-    const wKeys = _store.keys().filter(k => k.startsWith('tm_week_')).sort().reverse();
-    const streamData = sKeys.length ? JSON.parse(_store.getItem(sKeys[0])) : null;
-    const weekData   = wKeys.length  ? JSON.parse(_store.getItem(wKeys[0]))  : null;
-    updateAllDashboard(streamData, weekData);
+    const setTxt = (id, val) => { const el = document.getElementById(id); if (el && val !== null && val !== undefined && String(val).trim() !== '') el.textContent = val; };
+    const numFmt = v => parseInt(v).toLocaleString('es');
+
+    // Seguidores CB/SC (del último diario que los tenga; respaldo: semana/mes "fans_end")
+    const cbFans = _latestField('tm_stream_', 'cb_total_fans') || _latestField('tm_week_', 'cb_fans_end') || _latestField('tm_month_', 'cb_fans_end');
+    const scFans = _latestField('tm_stream_', 'sc_total_fans') || _latestField('tm_week_', 'sc_fans_end') || _latestField('tm_month_', 'sc_fans_end');
+    if (cbFans !== null) { setTxt('dash_cb_fans', numFmt(cbFans)); setTxt('kpi_cb_fans', numFmt(cbFans)); }
+    if (scFans !== null) { setTxt('dash_sc_fans', numFmt(scFans)); setTxt('kpi_sc_fans', numFmt(scFans)); }
+
+    // SC ingresos/hora (último diario sc_hoy; respaldo sc_30h)
+    const scHoy = _latestField('tm_stream_', 'sc_hoy') || _latestField('tm_stream_', 'sc_30h') || _latestField('tm_week_', 'sc_30h');
+    if (scHoy !== null) { const v = '$' + parseFloat(scHoy).toFixed(1); setTxt('dash_sc_30h', v); setTxt('kpi_sc_hoy', v); }
+
+    // Línea de ingreso/hora: no pisar el detalle de objetivo
+
+    // Fan Clubs (último valor absoluto de cualquier tipo de reporte)
+    const scFc = _latestField('tm_stream_', 'sc_fc_total') || _latestField('tm_week_', 'sc_fc') || _latestField('tm_month_', 'sc_fc');
+    const cbFc = _latestField('tm_stream_', 'cb_fc_total') || _latestField('tm_week_', 'cb_fc') || _latestField('tm_month_', 'cb_fc');
+    if (scFc !== null) { setTxt('dash_sc_fc', scFc); setTxt('kpi_sc_fc', scFc + ' subs'); setTxt('alert_sc_fc', scFc); }
+    if (cbFc !== null) { setTxt('dash_cb_fc', cbFc); setTxt('kpi_cb_fc', cbFc + ' subs'); setTxt('alert_cb_fc', cbFc); }
+
+    // OF suscriptores: SIEMPRE un valor absoluto (of_total del semanal/mensual).
+    // Nunca se suma of_new a lo que haya en pantalla (eso causaba números
+    // distintos en cada dispositivo y en cada recarga).
+    const ofTotal = _latestField('tm_week_', 'of_total') || _latestField('tm_month_', 'of_total');
+    if (ofTotal !== null) { setTxt('dash_of_subs', parseInt(ofTotal)); setTxt('kpi_of_subs', parseInt(ofTotal)); }
+
+    // StripScore y rating (del último semanal que los tenga)
+    const ss = _latestField('tm_week_', 'sc_stripscore') || _latestField('tm_month_', 'sc_stripscore');
+    const rating = _latestField('tm_week_', 'sc_rating') || _latestField('tm_month_', 'sc_rating');
+    if (ss !== null) { setTxt('kpi_sc_stripscore', numFmt(ss)); setTxt('dash_stripscore', numFmt(ss)); }
+    if (rating !== null) { setTxt('kpi_sc_rating', parseFloat(rating).toFixed(1) + ' / 5'); setTxt('dash_rating', parseFloat(rating).toFixed(1)); }
+
+    // Pago semanal SC (último semanal con sc_pago_tk → USD)
+    const pagoTk = _latestField('tm_week_', 'sc_pago_tk');
+    if (pagoTk !== null) {
+      const tk = parseInt(pagoTk);
+      setTxt('dash_pago_usd', '~$' + Math.round(tk * 0.05).toLocaleString('es'));
+    }
+
+    // Variaciones de seguidores del último diario (están en el .ss de cada tarjeta)
+    const today = new Date();
+    const mnames = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    const dateStr = today.getDate() + ' ' + mnames[today.getMonth()] + ' ' + today.getFullYear();
+    const cbNew = _latestField('tm_stream_', 'cb_new_fans');
+    const scNew = _latestField('tm_stream_', 'sc_new_fans');
+    const setChange = (fansId, val) => {
+      if (val === null) return;
+      const card = document.querySelector('#' + fansId);
+      const ss = card && card.closest('.stat-card') ? card.closest('.stat-card').querySelector('.ss') : null;
+      if (ss) ss.textContent = '↑ +' + val + ' · ' + dateStr;
+    };
+    setChange('dash_cb_fans', cbNew);
+    setChange('dash_sc_fans', scNew);
   } catch(e) { console.error('loadDashboardFromReports:', e); }
-  // Redibujar las gráficas con los datos actualizados (números del dashboard ya aplicados arriba)
+  // Redibujar las gráficas con los datos ya actualizados.
   try { if (typeof renderDashCharts === 'function') renderDashCharts(); } catch(e) { console.error('charts:', e); }
 }
 
@@ -9903,11 +9956,11 @@ function applyDashboardUpdate(data) {
     set('dash_cb_fc', data.cb_fc_total);
     set('kpi_cb_fc', data.cb_fc_total + ' subs');
   }
-  if (data.of_new && parseInt(data.of_new) > 0) {
-    const currentOf = parseInt(document.getElementById('dash_of_subs')?.textContent || '2');
-    const newOf = currentOf + parseInt(data.of_new);
-    set('dash_of_subs', newOf);
-    set('kpi_of_subs', newOf);
+  // OF suscriptores: solo un valor ABSOLUTO (of_total). Nunca se suma of_new al
+  // valor en pantalla — eso hacía que el número variara en cada recarga/dispositivo.
+  if (data.of_total !== undefined && data.of_total !== null && String(data.of_total).trim() !== '') {
+    set('dash_of_subs', parseInt(data.of_total));
+    set('kpi_of_subs', parseInt(data.of_total));
   }
 
   // Weekly data: pago SC, stripscore, rating
