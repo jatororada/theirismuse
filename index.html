@@ -131,6 +131,15 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 .notif-state.pending{background:var(--mint-soft);color:var(--mint);}
 .notif-state.past{background:var(--surface2);color:var(--text3);}
 .notif-empty{font-size:13px;color:var(--text2);line-height:1.6;padding:6px 0;}
+/* Fila con su pie (caption) y botón de copiar */
+.notif-row-wrap{border-top:1px solid var(--border);}
+.notif-row-wrap:first-of-type{border-top:none;}
+.notif-row-wrap .notif-row{border-top:none;}
+.notif-cap{display:flex;align-items:flex-start;gap:10px;margin:2px 0 12px;padding:11px 13px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;}
+.notif-cap-text{flex:1;min-width:0;font-size:12.5px;color:var(--text2);line-height:1.55;white-space:pre-wrap;word-break:break-word;}
+.notif-copy{flex-shrink:0;display:inline-flex;align-items:center;gap:5px;background:var(--mint-soft);border:1px solid var(--mint);color:var(--mint);font-family:var(--sans);font-size:11px;font-weight:600;padding:6px 11px;border-radius:7px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.notif-copy:hover{background:rgba(169,223,216,.2);}
+.notif-copy.done{background:rgba(126,214,160,.15);border-color:var(--green);color:var(--green);}
 h2{font-family:var(--sans);font-size:20px;font-weight:700;margin-bottom:14px;color:var(--text);margin-top:32px;letter-spacing:-.01em;}
 h3{font-size:10.5px;font-weight:500;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin:26px 0 10px;}
 p{color:var(--text2);font-size:13.5px;line-height:1.72;margin-bottom:10px;}
@@ -5252,6 +5261,7 @@ function notifBuildTodayList() {
       plat: a.plat,
       platName: notifPlatName(a.plat),
       accion: a.accion,
+      caption: a.caption || '',
       enviado: !!sentLog[sentKey],
       pasado: now.getTime() >= horaDate.getTime()
     });
@@ -5295,16 +5305,32 @@ function renderNotifPanel() {
   } else if (!list.length) {
     html += '<div class="notif-empty">Hoy no hay publicaciones programadas (día de descanso). Mañana verás aquí los recordatorios del plan.</div>';
   } else {
+    const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     list.forEach(n => {
       const hh = n.avisoHora.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', hour12: true });
       let stateClass = 'pending', stateTxt = 'pendiente';
       if (n.enviado) { stateClass = 'sent'; stateTxt = '✓ enviado'; }
       else if (n.pasado) { stateClass = 'past'; stateTxt = 'pasado'; }
-      html += '<div class="notif-row">'
+
+      // Bloque del pie (caption) con botón de copiar, solo si hay texto para publicar
+      let capBlock = '';
+      if (n.caption && n.caption.trim()) {
+        capBlock = '<div class="notif-cap">'
+          + '<div class="notif-cap-text">' + esc(n.caption) + '</div>'
+          + '<button class="notif-copy" data-caption="' + esc(n.caption) + '" onclick="copyNotifCap(this)">'
+          + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>'
+          + ' copiar</button>'
+          + '</div>';
+      }
+
+      html += '<div class="notif-row-wrap">'
+        + '<div class="notif-row">'
         + '<div class="notif-time">' + hh + '</div>'
         + '<div class="notif-body"><div class="notif-plat">' + n.platName + '</div>'
         + '<div class="notif-act">' + (n.accion || '') + '</div></div>'
         + '<div class="notif-state ' + stateClass + '">' + stateTxt + '</div>'
+        + '</div>'
+        + capBlock
         + '</div>';
     });
   }
@@ -6989,6 +7015,36 @@ function copyCap(text, btn) {
     btn.classList.add('done');
     setTimeout(() => { btn.textContent = 'copiar'; btn.classList.remove('done'); }, 2000);
   });
+}
+
+// Copiar el texto (pie) de un recordatorio al portapapeles, con respaldo para
+// navegadores/móviles donde navigator.clipboard no está disponible.
+function copyNotifCap(btn) {
+  const text = btn.getAttribute('data-caption') || '';
+  if (!text) return;
+  const ok = () => {
+    const orig = btn.innerHTML;
+    btn.innerHTML = '✓ copiado';
+    btn.classList.add('done');
+    setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('done'); }, 2000);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(ok).catch(() => fallbackCopy(text, ok));
+  } else {
+    fallbackCopy(text, ok);
+  }
+}
+function fallbackCopy(text, done) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed'; ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    if (done) done();
+  } catch(e) {}
 }
 
 function copyRep(id, btn) {
