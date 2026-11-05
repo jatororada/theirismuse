@@ -149,7 +149,7 @@ p strong{color:var(--text);font-weight:500;}
 /* ── ALERTS ── */
 .alert{border-left:3px solid;padding:13px 16px;margin:12px 0;font-size:13px;line-height:1.65;border-radius:0 4px 4px 0;}
 .alert strong{display:block;margin-bottom:3px;font-weight:500;}
-.alert-danger{border-color:var(--rose);background:rgba(200,80,96,.08);color:#e08090;}
+.alert-danger{border-color:var(--rose);background:rgba(240,168,200,.08);color:#e08090;}
 .alert-danger strong{color:#f0a0a8;}
 .alert-warn{border-color:var(--amber);background:rgba(196,137,74,.08);color:#d4a060;}
 .alert-warn strong{color:var(--amber);}
@@ -171,7 +171,7 @@ p strong{color:var(--text);font-weight:500;}
 .bi-both{background:rgba(169,223,216,.12);color:var(--gold);border:1px solid rgba(169,223,216,.3);}
 .bi-g{background:rgba(90,158,111,.2);color:var(--green);}
 .bi-a{background:rgba(196,137,74,.2);color:var(--amber);}
-.bi-r{background:rgba(200,80,96,.2);color:var(--rose);}
+.bi-r{background:rgba(240,168,200,.2);color:var(--rose);}
 .bi-prem{background:rgba(196,137,74,.2);color:var(--amber);}
 .bi-post{background:rgba(58,106,138,.2);color:var(--blue);}
 .bi-priv{background:rgba(192,96,128,.2);color:var(--pink);}
@@ -330,9 +330,9 @@ p strong{color:var(--text);font-weight:500;}
 .cday{background:var(--surface);border:1px solid var(--border);border-radius:4px;min-height:105px;padding:8px 8px 6px;display:flex;flex-direction:column;gap:3px;cursor:pointer;transition:border-color .15s,background .15s,transform .1s;position:relative;overflow:hidden;animation:fadeSlide .2s ease both;}
 .cday:hover{border-color:var(--border2);background:var(--bg3);transform:translateY(-1px);}
 .cday.empty{background:transparent;border-color:transparent;cursor:default;pointer-events:none;}
-.cday.today{border-color:var(--gold);background:linear-gradient(135deg,#1e1a10,var(--surface));}
+.cday.today{border-color:var(--mint);background:linear-gradient(135deg,rgba(169,223,216,.08),var(--surface));}
 .cday.today::after{content:'';position:absolute;top:0;right:0;width:0;height:0;border-top:18px solid var(--gold);border-left:18px solid transparent;}
-.cday.weekend:not(.empty){background:#0e0c08;}
+.cday.weekend:not(.empty){background:var(--bg2);}
 .dnum{font-family:var(--mono);font-size:10px;color:var(--text3);flex-shrink:0;}
 .cday.today .dnum{color:var(--gold);font-weight:600;}
 .cday.weekend:not(.empty) .dnum{color:var(--gold);opacity:.5;}
@@ -342,7 +342,7 @@ p strong{color:var(--text);font-weight:500;}
 .evtext{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .chip-stream{background:rgba(30,128,112,.25);color:#5ecfbc;}
 .chip-stream .evdot{background:var(--teal);}
-.chip-of{background:rgba(200,80,96,.22);color:#e8748a;}
+.chip-of{background:rgba(240,168,200,.18);color:var(--pink);}
 .chip-of .evdot{background:var(--rose);}
 .chip-social{background:rgba(169,223,216,.2);color:var(--gold2);}
 .chip-social .evdot{background:var(--gold);}
@@ -408,7 +408,7 @@ p strong{color:var(--text);font-weight:500;}
 .gc-purple .gl{color:var(--purple);}
 .gc-pink{background:rgba(192,96,128,.08);border-color:rgba(192,96,128,.3);}
 .gc-pink .gl{color:var(--pink);}
-.gc-rose{background:rgba(200,80,96,.08);border-color:rgba(200,80,96,.3);}
+.gc-rose{background:rgba(240,168,200,.08);border-color:rgba(240,168,200,.3);}
 .gc-rose .gl{color:var(--rose);}
 .gc-amber{background:rgba(196,137,74,.1);border-color:rgba(196,137,74,.4);}
 .gc-amber .gl{color:var(--amber);}
@@ -1541,7 +1541,7 @@ p strong{color:var(--text);font-weight:500;}
         <strong>Para:</strong> Shows estándar — strip, tease, nude progression. La opción más accesible que atrae más clientes.
       </div>
     </div>
-    <div style="background:rgba(200,80,96,.06);border:1px solid rgba(200,80,96,.22);border-radius:8px;padding:16px;">
+    <div style="background:rgba(240,168,200,.06);border:1px solid rgba(240,168,200,.22);border-radius:8px;padding:16px;">
       <div style="font-family:var(--mono);font-size:11px;font-weight:500;color:var(--rose);margin-bottom:10px;">● PRECIO EXCLUSIVO · 60 tk/min</div>
       <div style="font-size:12.5px;color:var(--text2);line-height:1.7;">
         <strong style="color:var(--text)">Conversión en $:</strong> 60 tk/min ≈ $3/min<br>
@@ -1651,7 +1651,7 @@ p strong{color:var(--text);font-weight:500;}
         <strong style="color:var(--text)">Cuándo usarlo:</strong> Siempre que hagas Private Show. Actívalo por defecto.
       </div>
     </div>
-    <div style="background:rgba(200,80,96,.05);border:1px solid rgba(200,80,96,.2);border-radius:8px;padding:16px;">
+    <div style="background:rgba(240,168,200,.05);border:1px solid rgba(240,168,200,.2);border-radius:8px;padding:16px;">
       <div style="font-family:var(--mono);font-size:11px;font-weight:500;color:var(--rose);margin-bottom:10px;">● EXCLUSIVE PRIVATE</div>
       <div style="font-size:12.5px;color:var(--text2);line-height:1.7;">
         <strong style="color:var(--text)">Qué es:</strong> Privado donde el Spy Show está desactivado — nadie puede espiar.<br>
@@ -1864,7 +1864,7 @@ p strong{color:var(--text);font-weight:500;}
     <div class="funnel-step"><div class="funnel-bar" style="background:rgba(58,106,138,.8);width:100%;min-width:180px">Twitter/X — Atracción</div><div class="funnel-lbl">Puerta de entrada pública<br><span>Contenido viral · teaser · horarios de stream</span></div></div>
     <div class="funnel-step"><div class="funnel-bar" style="background:rgba(42,80,96,.85);width:86%;min-width:160px">Instagram privado — Filtro</div><div class="funnel-lbl">Exclusividad y cercanía<br><span>Contenido íntimo · relación directa · prelanzamientos</span></div></div>
     <div class="funnel-step"><div class="funnel-bar" style="background:rgba(196,137,74,.8);width:70%;min-width:140px;color:var(--bg)">CB + SC — Conversión en vivo</div><div class="funnel-lbl">Monetización en tiempo real<br><span>Goals · privados · tickets show final</span></div></div>
-    <div class="funnel-step"><div class="funnel-bar" style="background:rgba(200,80,96,.8);width:52%;min-width:110px">OnlyFans — Retención</div><div class="funnel-lbl">Ingreso recurrente y escalable<br><span>Suscripción · PPV · DM upsell · clips de shows</span></div></div>
+    <div class="funnel-step"><div class="funnel-bar" style="background:rgba(240,168,200,.8);width:52%;min-width:110px">OnlyFans — Retención</div><div class="funnel-lbl">Ingreso recurrente y escalable<br><span>Suscripción · PPV · DM upsell · clips de shows</span></div></div>
     <div class="funnel-step"><div class="funnel-bar" style="background:rgba(35,30,25,.95);border:1px solid var(--border2);width:36%;min-width:90px">Club de Fans SC/CB — VIP</div><div class="funnel-lbl">Máxima monetización<br><span>Ingreso pasivo · acceso especial · lealtad</span></div></div>
   </div>
 
@@ -2548,7 +2548,7 @@ CB & SC — let's end 2026 together 💜🖤</div>
 .rec-body{}
 .rec-title{font-family:var(--mono);font-size:11px;color:var(--text);font-weight:500;margin-bottom:2px;}
 .rec-desc{font-size:11px;color:var(--text2);line-height:1.5;}
-.rec-item.rec-urgent{border-color:rgba(200,80,96,.35);background:rgba(200,80,96,.05);}
+.rec-item.rec-urgent{border-color:rgba(240,168,200,.35);background:rgba(240,168,200,.05);}
 .rec-item.rec-ok{border-color:rgba(90,158,111,.25);background:rgba(90,158,111,.04);}
 .rec-item.rec-warn{border-color:rgba(196,137,74,.3);background:rgba(196,137,74,.05);}
 
@@ -2980,7 +2980,7 @@ CB & SC — let's end 2026 together 💜🖤</div>
   .anz-pill{display:inline-block;font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:3px;margin-left:6px;vertical-align:middle;}
   .anz-pill-cb{background:rgba(233,105,57,.15);color:var(--cb);}
   .anz-pill-sc{background:rgba(100,180,220,.15);color:var(--sc);}
-  .anz-error{background:rgba(200,80,96,.08);border:1px solid rgba(200,80,96,.25);border-radius:6px;padding:12px 14px;font-family:var(--mono);font-size:11px;color:var(--rose);margin-top:12px;display:none;}
+  .anz-error{background:rgba(240,168,200,.08);border:1px solid rgba(240,168,200,.25);border-radius:6px;padding:12px 14px;font-family:var(--mono);font-size:11px;color:var(--rose);margin-top:12px;display:none;}
   .anz-error.visible{display:block;}
   @media(max-width:768px){.anz-priv-block{grid-template-columns:1fr;}}
   </style>
@@ -4791,7 +4791,7 @@ function renderCal() {
       // of badge
       if(data.of && data.of.length){
         const b3=document.createElement('span');
-        b3.style.cssText='font-family:var(--mono);font-size:8px;padding:2px 5px;border-radius:2px;background:rgba(200,80,96,.2);color:#e8748a;display:inline-block;width:fit-content;';
+        b3.style.cssText='font-family:var(--mono);font-size:8px;padding:2px 5px;border-radius:2px;background:rgba(240,168,200,.16);color:var(--pink);display:inline-block;width:fit-content;';
         b3.textContent = data.of[0].toLowerCase().includes('ppv') ? 'PPV' : 'OF post';
         badges.appendChild(b3);
       }
@@ -4825,7 +4825,7 @@ function renderCal() {
         gbadges.appendChild(gb2);
       }
       const gb3=document.createElement('span');
-      gb3.style.cssText='font-family:var(--mono);font-size:8px;padding:2px 5px;border-radius:2px;background:rgba(200,80,96,.2);color:#e8748a;display:inline-block;width:fit-content;';
+      gb3.style.cssText='font-family:var(--mono);font-size:8px;padding:2px 5px;border-radius:2px;background:rgba(240,168,200,.16);color:var(--pink);display:inline-block;width:fit-content;';
       gb3.textContent='OF post';
       gbadges.appendChild(gb3);
       if(gd.type !== 'rest') {
@@ -8575,19 +8575,12 @@ function sbInit() {
 
 // Sube los reportes locales a la nube (sin pisar nada por conflicto de clave,
 // el upsert fusiona) y luego recarga todo desde la nube como fuente principal.
+// Al iniciar sesión, sbLoadAll ya hace la fusión por marca de tiempo en ambos
+// sentidos (adopta lo más nuevo de la nube y sube lo más nuevo local), así que
+// basta con llamarlo. (Antes esta función subía TODO lo local sin comparar
+// fechas, lo que hacía que un dispositivo con datos viejos pisara la nube.)
 async function sbMergeLocalThenLoad() {
   if (!sbClient || !sbUser) return;
-  try {
-    var keys = [];
-    for (var i = 0; i < localStorage.length; i++) {
-      var k = localStorage.key(i);
-      if (k && k.startsWith('tm_') && k !== 'tm_notif_queue' && !k.startsWith('tm_notif_sent_')) keys.push(k);
-    }
-    Object.keys(_store._cache).forEach(function(k){ if (k.startsWith('tm_') && keys.indexOf(k)===-1 && k!=='tm_notif_queue' && !k.startsWith('tm_notif_sent_')) keys.push(k); });
-    // subir en paralelo lo que haya local
-    await Promise.all(keys.map(function(k){ return sbSave(k, _store.getItem(k)); }));
-  } catch(e) { console.error('merge local→nube:', e); }
-  // ahora la nube tiene todo: cargar de ahí
   sbLoadAll();
 }
 function sbSetStatus(msg, color) {
@@ -8680,16 +8673,60 @@ async function sbLoadAll(_retry) {
     var result = await sbClient.from('reportes').select('key,value').eq('user_id', sbUser.id);
     if (result.error) throw result.error;
     var data = result.data || [];
-    // La nube es la fuente principal: volcar TODOS los reportes al almacenamiento
-    // local (cache + localStorage) para que las lecturas síncronas los vean.
-    for (var i = 0; i < data.length; i++) {
-      _store._cache[data[i].key] = data[i].value;
-      try { localStorage.setItem(data[i].key, data[i].value); } catch(e) {}
+
+    // ── FUSIÓN POR MARCA DE TIEMPO ("última escritura gana") ──────────
+    // Para que TODOS los dispositivos converjan al dato más reciente:
+    //  • Si la nube tiene una versión más nueva (o el local no la tiene) → se
+    //    adopta la de la nube en el dispositivo.
+    //  • Si el local tiene una versión más nueva que la nube → se sube a la nube.
+    // Así ningún dispositivo con datos viejos pisa los nuevos de otro.
+    var cloud = {};
+    for (var i = 0; i < data.length; i++) cloud[data[i].key] = data[i].value;
+
+    // claves a considerar: unión de nube + local (solo reportes, no colas de notif)
+    var allKeys = {};
+    Object.keys(cloud).forEach(function(k){ allKeys[k] = 1; });
+    try {
+      for (var li = 0; li < localStorage.length; li++) {
+        var lk = localStorage.key(li);
+        if (lk && lk.startsWith('tm_')) allKeys[lk] = 1;
+      }
+    } catch(e) {}
+    Object.keys(_store._cache).forEach(function(k){ if (k.startsWith('tm_')) allKeys[k] = 1; });
+
+    var _ts = function(v){ try { var o = JSON.parse(v); return (o && typeof o.ts === 'number') ? o.ts : 0; } catch(e){ return 0; } };
+    var toUpload = [];
+    Object.keys(allKeys).forEach(function(k){
+      // las colas de notificaciones son por-dispositivo: no se sincronizan
+      if (k === 'tm_notif_queue' || k.startsWith('tm_notif_sent_') || k === 'tm_notif_enabled' || k === 'tm_seeded') return;
+      var cloudVal = cloud.hasOwnProperty(k) ? cloud[k] : null;
+      var localVal = _store.getItem(k);
+      if (cloudVal === null && localVal != null) {
+        // solo local → subir a la nube
+        toUpload.push(k);
+      } else if (cloudVal !== null && localVal == null) {
+        // solo nube → adoptar local
+        _store._cache[k] = cloudVal;
+        try { localStorage.setItem(k, cloudVal); } catch(e) {}
+      } else if (cloudVal !== null && localVal != null && cloudVal !== localVal) {
+        // existe en ambos y difieren → gana el de mayor ts
+        if (_ts(localVal) > _ts(cloudVal)) {
+          toUpload.push(k);                 // local más nuevo → subir
+        } else {
+          _store._cache[k] = cloudVal;      // nube más nueva (o igual) → adoptar
+          try { localStorage.setItem(k, cloudVal); } catch(e) {}
+        }
+      }
+    });
+
+    // Subir a la nube las versiones locales más nuevas (si las hay)
+    if (toUpload.length) {
+      try { await Promise.all(toUpload.map(function(k){ return sbSave(k, _store.getItem(k)); })); } catch(e) { console.error('subida parcial:', e); }
     }
+
     sbSetStatus('● ' + sbUser.email + ' ✓', 'var(--green)');
-    if (typeof setHeaderSync === 'function') setHeaderSync('ok', data.length);
-    // Repintar TODO el dashboard y los historiales con los datos recuperados
-    // de la nube. Idempotente, sin rellenar formularios.
+    if (typeof setHeaderSync === 'function') setHeaderSync('ok', Object.keys(cloud).length);
+    // Repintar TODO el dashboard y los historiales con los datos ya fusionados.
     if (typeof refreshAllFromStore === 'function') refreshAllFromStore();
   } catch(e) {
     console.error('SB load error:', e);
@@ -10062,6 +10099,18 @@ document.addEventListener('visibilitychange', function() {
     sbLoadAll();
   }
 });
+
+// Re-sincronización periódica: mientras la app está abierta y visible, consulta
+// la nube cada 60 s para que los cambios hechos en OTRO dispositivo aparezcan
+// aquí automáticamente (sin recargar). Solo corre si hay sesión y pestaña activa.
+setInterval(function() {
+  if (document.visibilityState === 'visible'
+      && typeof sbClient !== 'undefined' && sbClient
+      && typeof sbUser !== 'undefined' && sbUser
+      && typeof sbLoadAll === 'function') {
+    sbLoadAll();
+  }
+}, 60000);
 </script>
 
 <!-- LOGIN MODAL -->
@@ -10164,4 +10213,3 @@ document.addEventListener('visibilitychange', function() {
 </script>
 </body>
 </html>
-      
