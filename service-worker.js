@@ -5,7 +5,7 @@
 // Estrategia: network-first para el HTML (siempre la versión más nueva
 // si hay conexión), cache-first para recursos estáticos (fuentes).
 
-const CACHE_NAME = 'theirismuse-v1';
+const CACHE_NAME = 'theirismuse-v3';
 const APP_SHELL = [
   './',
   './index.html',
@@ -75,6 +75,20 @@ self.addEventListener('fetch', function(event) {
           return cached || caches.match('./') || caches.match('./theirismuse.html');
         });
       })
+    );
+    return;
+  }
+
+  // Iconos y manifest: network-first también, para que un icono/color nuevo
+  // reemplace siempre al viejo en cuanto haya conexión (evita quedarse con el
+  // icono o los colores anteriores en caché).
+  if (url.pathname.indexOf('icon-') !== -1 || url.pathname.indexOf('manifest.json') !== -1) {
+    event.respondWith(
+      fetch(req).then(function(res) {
+        var resClone = res.clone();
+        caches.open(CACHE_NAME).then(function(cache) { cache.put(req, resClone); });
+        return res;
+      }).catch(function() { return caches.match(req); })
     );
     return;
   }
