@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0">
-<meta name="theme-color" content="#c8921a">
+<meta name="theme-color" content="#171821">
 <meta name="description" content="Dashboard de gestión para streaming — KPIs, cronograma, reportes y analizador de tokens">
 <!-- PWA: manifest incrustado (base64) para despliegue sin archivos externos -->
 <link rel="manifest" href="./manifest.json">
@@ -13,28 +13,31 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="theirismuse">
 <link rel="apple-touch-icon" href="./icon-180.png">
-<link rel="icon" type="image/png" href="./icon-192.png">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20width%3D%22512%22%20height%3D%22512%22%20viewBox%3D%220%200%20512%20512%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22bg%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%2321222d%22/%3E%3Cstop%20offset%3D%220.55%22%20stop-color%3D%22%23171821%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23141520%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20x%3D%220%22%20y%3D%220%22%20width%3D%22512%22%20height%3D%22512%22%20rx%3D%22116%22%20fill%3D%22url%28%23bg%29%22/%3E%3Ctext%20x%3D%22256%22%20y%3D%22238%22%20font-family%3D%22Georgia%2C%20serif%22%20font-size%3D%22215%22%20font-weight%3D%22600%22%20font-style%3D%22italic%22%20fill%3D%22%23a9dfd8%22%20text-anchor%3D%22middle%22%20dominant-baseline%3D%22central%22%3Etm%3C/text%3E%3Crect%20x%3D%22150%22%20y%3D%22340%22%20width%3D%22212%22%20height%3D%2210%22%20rx%3D%225%22%20fill%3D%22%23a9dfd8%22%20opacity%3D%220.5%22/%3E%3C/svg%3E">
+  <link rel="icon" type="image/png" href="./icon-192.png">
 <title>theirismuse — Sistema Completo v2.0</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --bg:#0a0908;--bg2:#0f0d0a;--bg3:#161410;
-  --surface:#171511;--surface2:#1e1b16;
-  --border:#252219;--border2:#38342a;
-  --text:#e8e2d4;--text2:#9e9588;--text3:#5c5850;
-  --gold:#c8921a;--gold2:#e8b84a;--gold3:#f5d88a;
-  --rose:#c85060;--teal:#1e8070;--blue:#3a6a8a;
-  --purple:#7a5ea5;--amber:#c4894a;--green:#5a9e6f;
-  --cb:#f0a500;--sc:#e03c3c;--pink:#c06080;
-  --sidebar-w:230px;
-  --mono:'DM Mono',monospace;
-  --serif:'Cormorant Garamond',Georgia,serif;
+  /* Paleta inspirada en el dashboard de referencia: verde menta sobre azul-negro */
+  --bg:#171821;--bg2:#1b1c26;--bg3:#21222d;
+  --surface:#21222d;--surface2:#2a2b38;
+  --border:#2e2f3d;--border2:#3a3b4a;
+  --text:#ffffff;--text2:#a8aab4;--text3:#6b6d78;
+  /* El acento principal (antes dorado) ahora es verde menta */
+  --gold:#a9dfd8;--gold2:#bfe9e2;--gold3:#d6f2ed;
+  --mint:#a9dfd8;--mint-soft:rgba(169,223,216,.14);
+  --rose:#f0889f;--teal:#5cc7b8;--blue:#8ab4f8;
+  --purple:#b39ddb;--amber:#f6c177;--green:#7ed6a0;
+  --cb:#8ab4f8;--sc:#f0889f;--pink:#f0a8c8;
+  --sidebar-w:240px;
+  --mono:'DM Sans',sans-serif;
+  --serif:'DM Sans',sans-serif;
   --sans:'DM Sans',sans-serif;
 }
 html{scroll-behavior:smooth;}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden;}
-body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.5;}
 
 /* ── PROGRESS BAR ── */
 #prog{position:fixed;top:0;left:0;right:0;height:2px;background:var(--border);z-index:500;}
@@ -60,35 +63,35 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
   position:fixed;
   top:12px;left:calc(var(--sidebar-w) + 4px);
   z-index:200;
-  width:36px;height:36px;
+  width:38px;height:38px;
   background:var(--surface);
   border:1px solid var(--border2);
-  border-radius:6px;
+  border-radius:10px;
   cursor:pointer;
   display:flex;align-items:center;justify-content:center;
-  color:var(--text2);font-size:14px;
+  color:var(--text2);font-size:15px;
   transition:left .25s ease,color .15s,background .15s;
 }
-.sidebar-toggle:hover{color:var(--gold);border-color:var(--gold);}
+.sidebar-toggle:hover{color:var(--mint);border-color:var(--mint);background:var(--surface2);}
 
-.sidebar-toggle:hover{color:var(--gold);background:var(--surface2);}
+.sidebar-logo{padding:20px 16px 16px;}
+.brand{font-family:var(--sans);font-size:20px;font-weight:700;color:var(--mint);letter-spacing:-.01em;}
+.version{font-family:var(--sans);font-size:10px;color:var(--text3);letter-spacing:.02em;margin-top:3px;}
 
-.sidebar-logo{padding:22px 18px 18px;border-bottom:1px solid var(--border);}
-.brand{font-family:var(--serif);font-size:19px;font-weight:600;color:var(--gold);letter-spacing:.02em;}
-.version{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.15em;text-transform:uppercase;margin-top:4px;}
-
-.nav-group{padding:12px 0 6px;}
-.nav-group-label{font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--text3);padding:0 18px 6px;}
+.nav-group{padding:8px 0 4px;}
+.nav-group-label{font-family:var(--sans);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);padding:0 20px 6px;font-weight:600;}
 .nav-item{
-  display:flex;align-items:center;gap:8px;
-  padding:7px 18px;font-size:12.5px;color:var(--text3);
-  cursor:pointer;border:none;background:none;width:100%;text-align:left;
-  font-family:var(--sans);border-left:2px solid transparent;
-  transition:all .15s;white-space:nowrap;
+  display:flex;align-items:center;gap:11px;
+  padding:9px 14px;margin:1px 10px;font-size:13px;color:var(--text2);
+  cursor:pointer;border:none;background:none;width:calc(100% - 20px);text-align:left;
+  font-family:var(--sans);font-weight:500;border-radius:9px;
+  transition:background .15s,color .15s;white-space:nowrap;
 }
-.nav-item:hover{color:var(--text2);background:rgba(200,146,26,.04);}
-.nav-item.active{color:var(--gold);border-left-color:var(--gold);background:rgba(200,146,26,.07);}
-.nav-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.nav-item:hover{color:var(--text);background:var(--surface2);}
+.nav-item.active{color:#171821;background:var(--mint);font-weight:600;}
+.nav-ico{width:18px;height:18px;flex-shrink:0;opacity:.95;}
+.nav-item.active .nav-ico{opacity:1;}
+.nav-dot{display:none;}
 
 /* ── MAIN ── */
 .main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;transition:margin-left .25s ease;}
@@ -99,10 +102,36 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 @keyframes panelIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
 
 /* ── TYPOGRAPHY ── */
-.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;}
-.page-title{font-family:var(--serif);font-size:clamp(38px,5vw,64px);font-weight:300;line-height:1.05;color:var(--text);margin-bottom:18px;}
-.page-title em{font-style:italic;color:var(--text3);font-weight:300;}
-h2{font-family:var(--serif);font-size:26px;font-weight:400;margin-bottom:14px;color:var(--text);margin-top:32px;}
+.eyebrow{font-family:var(--sans);font-size:12px;letter-spacing:.01em;text-transform:none;color:var(--text3);margin-bottom:8px;font-weight:500;}
+.page-title{font-family:var(--sans);font-size:clamp(26px,3.4vw,38px);font-weight:700;line-height:1.1;color:var(--text);margin-bottom:16px;letter-spacing:-.02em;}
+.page-title em{font-style:normal;color:var(--text3);font-weight:400;font-size:.62em;display:block;margin-top:4px;letter-spacing:0;}
+.page-title br{display:none;}
+
+/* ── DASHBOARD HEADER (estilo referencia: título + campana + cuenta) ── */
+.dash-header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap;}
+.dash-header-actions{display:flex;align-items:center;gap:10px;}
+.hdr-btn{position:relative;display:flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:12px;background:var(--surface);border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:all .15s;}
+.hdr-btn:hover{color:var(--mint);border-color:var(--border2);}
+.hdr-btn.on{color:var(--mint);background:var(--mint-soft);border-color:var(--mint);}
+.hdr-badge{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--rose);color:#171821;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;}
+.hdr-account{display:flex;align-items:center;gap:8px;height:42px;padding:0 14px;border-radius:12px;background:var(--surface);border:1px solid var(--border);font-size:12.5px;color:var(--text2);cursor:default;}
+
+/* ── NOTIF PANEL (recordatorios del día dentro del dashboard) ── */
+.notif-panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:24px;}
+.notif-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+.notif-panel-title{font-size:16px;font-weight:700;color:var(--text);}
+.notif-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--border);}
+.notif-row:first-of-type{border-top:none;}
+.notif-time{font-family:var(--sans);font-size:13px;font-weight:700;color:var(--mint);min-width:62px;}
+.notif-body{flex:1;min-width:0;}
+.notif-plat{font-size:12.5px;font-weight:600;color:var(--text);}
+.notif-act{font-size:12px;color:var(--text3);margin-top:1px;line-height:1.4;}
+.notif-state{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;white-space:nowrap;}
+.notif-state.sent{background:rgba(126,214,160,.15);color:var(--green);}
+.notif-state.pending{background:var(--mint-soft);color:var(--mint);}
+.notif-state.past{background:var(--surface2);color:var(--text3);}
+.notif-empty{font-size:13px;color:var(--text2);line-height:1.6;padding:6px 0;}
+h2{font-family:var(--sans);font-size:20px;font-weight:700;margin-bottom:14px;color:var(--text);margin-top:32px;letter-spacing:-.01em;}
 h3{font-size:10.5px;font-weight:500;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin:26px 0 10px;}
 p{color:var(--text2);font-size:13.5px;line-height:1.72;margin-bottom:10px;}
 p strong{color:var(--text);font-weight:500;}
@@ -130,7 +159,7 @@ p strong{color:var(--text);font-weight:500;}
 .bi{display:inline-block;font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:20px;font-weight:500;margin-right:3px;}
 .bi-cb{background:rgba(240,165,0,.15);color:var(--cb);border:1px solid rgba(240,165,0,.3);}
 .bi-sc{background:rgba(224,60,60,.12);color:var(--sc);border:1px solid rgba(224,60,60,.25);}
-.bi-both{background:rgba(200,146,26,.12);color:var(--gold);border:1px solid rgba(200,146,26,.3);}
+.bi-both{background:rgba(169,223,216,.12);color:var(--gold);border:1px solid rgba(169,223,216,.3);}
 .bi-g{background:rgba(90,158,111,.2);color:var(--green);}
 .bi-a{background:rgba(196,137,74,.2);color:var(--amber);}
 .bi-r{background:rgba(200,80,96,.2);color:var(--rose);}
@@ -139,20 +168,22 @@ p strong{color:var(--text);font-weight:500;}
 .bi-priv{background:rgba(192,96,128,.2);color:var(--pink);}
 
 /* ── STAT CARDS ── */
-.stat-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px;}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px 20px;flex:1;min-width:130px;}
-.stat-card .sl{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
-.stat-card .sv{font-family:var(--serif);font-size:30px;font-weight:300;color:var(--text);line-height:1;}
-.stat-card .ss{font-size:11px;color:var(--text3);margin-top:4px;}
+.stat-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:28px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;flex:1;min-width:140px;transition:border-color .15s;}
+.stat-card:hover{border-color:var(--border2);}
+.stat-card .sl{font-family:var(--sans);font-size:11px;letter-spacing:.01em;text-transform:none;color:var(--text3);margin-bottom:8px;font-weight:500;}
+.stat-card .sv{font-family:var(--sans);font-size:28px;font-weight:700;color:var(--text);line-height:1;letter-spacing:-.02em;}
+.stat-card .ss{font-size:11.5px;color:var(--text3);margin-top:6px;}
 
 /* ── KPI GRID ── */
-.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0;}
-.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:14px 16px;}
-.kpi-card .kl{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
-.kpi-card .kn{font-family:var(--serif);font-size:26px;font-weight:300;color:var(--text);line-height:1;}
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0;}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;transition:border-color .15s;}
+.kpi-card:hover{border-color:var(--border2);}
+.kpi-card .kl{font-family:var(--sans);font-size:11px;letter-spacing:.01em;text-transform:none;color:var(--text3);margin-bottom:8px;font-weight:500;}
+.kpi-card .kn{font-family:var(--sans);font-size:26px;font-weight:700;color:var(--text);line-height:1;letter-spacing:-.02em;}
 .kpi-card .kn.red{color:var(--rose);}
-.kpi-card .kg{font-size:11px;color:var(--green);margin-top:4px;}
-.kpi-card .ks{font-size:10px;margin-top:6px;}
+.kpi-card .kg{font-size:11.5px;color:var(--green);margin-top:6px;}
+.kpi-card .ks{font-size:10.5px;margin-top:6px;}
 
 /* ── FUNNEL ── */
 .funnel{margin:20px 0;display:flex;flex-direction:column;gap:6px;}
@@ -222,15 +253,15 @@ p strong{color:var(--text);font-weight:500;}
 /* ── REPORT BOX ── */
 .report-wrap{position:relative;margin-bottom:20px;}
 .report-box{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:22px 26px 22px 26px;font-family:var(--mono);font-size:12px;line-height:1.9;color:var(--text2);white-space:pre-wrap;}
-.copy-btn{display:flex;align-items:center;gap:6px;margin-top:10px;background:rgba(200,146,26,.12);border:1px solid rgba(200,146,26,.3);color:var(--gold);font-family:var(--mono);font-size:11px;padding:8px 20px;border-radius:6px;cursor:pointer;transition:all .15s;width:100%!important;justify-content:center;font-weight:500;letter-spacing:.05em;}
-.copy-btn:hover{background:rgba(200,146,26,.28);border-color:rgba(200,146,26,.6);}
+.copy-btn{display:flex;align-items:center;gap:6px;margin-top:10px;background:rgba(169,223,216,.12);border:1px solid rgba(169,223,216,.3);color:var(--gold);font-family:var(--mono);font-size:11px;padding:8px 20px;border-radius:6px;cursor:pointer;transition:all .15s;width:100%!important;justify-content:center;font-weight:500;letter-spacing:.05em;}
+.copy-btn:hover{background:rgba(169,223,216,.28);border-color:rgba(169,223,216,.6);}
 .copy-btn.done{background:rgba(90,158,111,.15);border-color:rgba(90,158,111,.4);color:var(--green);}
 /* Caption copy boxes */
 .caption-box{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:14px 16px;margin:8px 0;position:relative;}
 .caption-label{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
 .caption-text{font-size:13px;color:var(--text);line-height:1.65;white-space:pre-wrap;}
-.caption-copy{font-family:var(--mono);font-size:9px;letter-spacing:.1em;background:rgba(200,146,26,.12);border:1px solid rgba(200,146,26,.3);color:var(--gold);padding:3px 10px;border-radius:3px;cursor:pointer;transition:all .15s;white-space:nowrap;}
-.caption-copy:hover{background:rgba(200,146,26,.25);}
+.caption-copy{font-family:var(--mono);font-size:9px;letter-spacing:.1em;background:rgba(169,223,216,.12);border:1px solid rgba(169,223,216,.3);color:var(--gold);padding:3px 10px;border-radius:3px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.caption-copy:hover{background:rgba(169,223,216,.25);}
 .caption-copy.done{background:rgba(90,158,111,.2);border-color:rgba(90,158,111,.3);color:var(--green);}
 /* In detail panel */
 .dp-caption{background:var(--bg3);border:1px solid var(--border2);border-radius:5px;padding:10px 12px;margin:4px 0;position:relative;cursor:pointer;transition:border-color .15s;}
@@ -268,7 +299,7 @@ p strong{color:var(--text);font-weight:500;}
 .d-light .wday-head{background:rgba(58,106,138,.12);color:var(--blue);}
 .d-uni .wday-head{background:rgba(122,94,165,.1);color:var(--purple);}
 .d-mid .wday-head{background:rgba(122,94,165,.1);color:var(--purple);}
-.d-heavy .wday-head{background:rgba(200,146,26,.1);color:var(--gold);}
+.d-heavy .wday-head{background:rgba(169,223,216,.1);color:var(--gold);}
 .d-prem .wday-head{background:rgba(196,137,74,.15);color:var(--amber);}
 
 /* ── CALENDAR ── */
@@ -278,8 +309,8 @@ p strong{color:var(--text);font-weight:500;}
 .cal-ctrl-right{display:flex;align-items:center;gap:8px;}
 .ctrl-btn{background:var(--surface2);border:1px solid var(--border2);color:var(--text2);width:34px;height:34px;border-radius:4px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
 .ctrl-btn:hover{border-color:var(--gold);color:var(--gold);}
-.today-btn{font-family:var(--mono);font-size:10px;letter-spacing:.1em;background:rgba(200,146,26,.1);border:1px solid rgba(200,146,26,.3);color:var(--gold);padding:7px 14px;border-radius:4px;cursor:pointer;transition:all .15s;}
-.today-btn:hover{background:rgba(200,146,26,.2);}
+.today-btn{font-family:var(--mono);font-size:10px;letter-spacing:.1em;background:rgba(169,223,216,.1);border:1px solid rgba(169,223,216,.3);color:var(--gold);padding:7px 14px;border-radius:4px;cursor:pointer;transition:all .15s;}
+.today-btn:hover{background:rgba(169,223,216,.2);}
 .cal-statsbar{display:flex;gap:20px;flex-wrap:wrap;padding:10px 16px;background:var(--surface);border:1px solid var(--border);border-radius:4px;margin-bottom:12px;}
 .cstat .csl{font-family:var(--mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--text3);}
 .cstat .csv{font-family:var(--serif);font-size:22px;font-weight:300;color:var(--text);}
@@ -304,7 +335,7 @@ p strong{color:var(--text);font-weight:500;}
 .chip-stream .evdot{background:var(--teal);}
 .chip-of{background:rgba(200,80,96,.22);color:#e8748a;}
 .chip-of .evdot{background:var(--rose);}
-.chip-social{background:rgba(200,146,26,.2);color:var(--gold2);}
+.chip-social{background:rgba(169,223,216,.2);color:var(--gold2);}
 .chip-social .evdot{background:var(--gold);}
 .chip-special{background:rgba(120,80,200,.22);color:#c0a0f0;}
 .chip-special .evdot{background:var(--purple);}
@@ -415,16 +446,20 @@ p strong{color:var(--text);font-weight:500;}
 
   /* Stat cards */
   .stat-row{gap:8px;}
-  .stat-card{min-width:calc(50% - 4px);padding:12px 14px;}
+  .stat-card{min-width:calc(50% - 4px);padding:14px 16px;}
   .stat-card .sv{font-size:24px;}
+
+  /* Header del dashboard: apilar título y acciones */
+  .dash-header{flex-direction:column;align-items:stretch;gap:12px;}
+  .dash-header-actions{justify-content:flex-start;}
 
   /* Tables */
   .dtable{font-size:11px;display:block;overflow-x:auto;}
   .dtable th,.dtable td{padding:7px 8px;}
 
   /* Typography */
-  .page-title{font-size:30px;}
-  h2{font-size:20px;}
+  .page-title{font-size:26px;}
+  h2{font-size:18px;}
 
   /* Detail panel */
   #detailPanel{border-radius:8px;margin-bottom:12px;padding:16px;}
@@ -466,7 +501,7 @@ p strong{color:var(--text);font-weight:500;}
 .chart-tabs{display:flex;gap:4px;}
 .chart-tab{background:transparent;border:1px solid var(--border2);color:var(--text3);font-family:var(--mono);font-size:9px;letter-spacing:.04em;text-transform:uppercase;padding:4px 8px;border-radius:5px;cursor:pointer;transition:all .15s;white-space:nowrap;}
 .chart-tab:hover{color:var(--text2);border-color:var(--text3);}
-.chart-tab.active{background:rgba(200,146,26,.12);border-color:var(--gold);color:var(--gold);}
+.chart-tab.active{background:rgba(169,223,216,.12);border-color:var(--gold);color:var(--gold);}
 .chart-body{position:relative;flex:1;height:220px;}
 .chart-body canvas{max-width:100%;}
 @media (max-width:640px){ .chart-body{height:200px;} .chart-title{font-size:15px;} }
@@ -494,12 +529,12 @@ p strong{color:var(--text);font-weight:500;}
 </head>
 <body>
 <!-- ══ SPLASH SCREEN (pantalla de carga PWA) ══ -->
-<div id="pwa-splash" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#171511,#0a0908);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s ease;">
-  <img src="data:image/png;base64,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" alt="theirismuse" style="width:110px;height:110px;border-radius:26px;box-shadow:0 8px 40px rgba(200,146,26,.25);margin-bottom:24px;animation:splashPulse 1.8s ease-in-out infinite;">
-  <div style="font-family:'Cormorant Garamond',Georgia,serif;font-size:30px;font-style:italic;color:#e8b84a;letter-spacing:.02em;margin-bottom:8px;">theirismuse</div>
-  <div style="font-family:'DM Mono',monospace;font-size:10px;color:#5c5850;text-transform:uppercase;letter-spacing:.2em;">cargando…</div>
-  <div style="margin-top:28px;width:120px;height:3px;background:#252219;border-radius:2px;overflow:hidden;">
-    <div id="pwa-splash-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#c8921a,#f5d88a);border-radius:2px;transition:width .3s;"></div>
+<div id="pwa-splash" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(145deg,#21222d,#171821 55%,#141520);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s ease;">
+  <svg width="110" height="110" style="border-radius:26px;box-shadow:0 10px 50px rgba(169,223,216,.22);margin-bottom:24px;display:block;animation:splashPulse 1.8s ease-in-out infinite;" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#21222d"/><stop offset="0.55" stop-color="#171821"/><stop offset="1" stop-color="#141520"/></linearGradient></defs><rect x="0" y="0" width="512" height="512" rx="116" fill="url(#bg)"/><text x="256" y="238" font-family="Georgia, 'Times New Roman', serif" font-size="215" font-weight="600" font-style="italic" fill="#a9dfd8" text-anchor="middle" dominant-baseline="central">tm</text><rect x="150" y="340" width="212" height="10" rx="5" fill="#a9dfd8" opacity="0.5"/></svg>
+  <div style="font-family:'DM Sans',sans-serif;font-size:28px;font-weight:700;color:#a9dfd8;letter-spacing:-.01em;margin-bottom:8px;">theirismuse</div>
+  <div style="font-family:'DM Mono',monospace;font-size:10px;color:#6b6d78;text-transform:uppercase;letter-spacing:.2em;">cargando…</div>
+  <div style="margin-top:28px;width:140px;height:3px;background:#2e2f3d;border-radius:2px;overflow:hidden;">
+    <div id="pwa-splash-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#a9dfd8,#d6f2ed);border-radius:2px;transition:width .3s;"></div>
   </div>
 </div>
 <style>
@@ -521,63 +556,63 @@ p strong{color:var(--text);font-weight:500;}
   <div class="sidebar-logo">
     <div class="brand">theirismuse</div>
     <div class="version">Sistema completo v2.0 · CB + SC</div>
-    <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:7px;width:100%;margin-top:12px;background:rgba(200,146,26,.12);border:1px solid var(--gold);color:var(--gold);border-radius:7px;padding:8px 10px;font-size:11px;font-family:var(--sans);cursor:pointer;transition:all .15s;">
+    <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:7px;width:100%;margin-top:12px;background:rgba(169,223,216,.12);border:1px solid var(--gold);color:var(--gold);border-radius:7px;padding:8px 10px;font-size:11px;font-family:var(--sans);cursor:pointer;transition:all .15s;">
       <span style="font-size:14px;">📲</span> Instalar app
     </button>
   </div>
 
   <div class="nav-group">
     <div class="nav-group-label">General</div>
-    <button class="nav-item active" onclick="show('dashboard')"><span class="nav-dot" style="background:var(--gold)"></span>Dashboard</button>
+    <button class="nav-item active" onclick="show('dashboard')"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Dashboard</button>
   </div>
 
   <div class="nav-group">
     <div class="nav-group-label">Planificación</div>
-    <button class="nav-item" onclick="show('cronograma')"><span class="nav-dot" style="background:var(--teal)"></span>Cronograma</button>
-    <button class="nav-item" onclick="show('reglas')"><span class="nav-dot" style="background:var(--blue)"></span>Reglas del cronograma</button>
-    <button class="nav-item" onclick="show('horas')"><span class="nav-dot" style="background:var(--purple)"></span>Horas óptimas</button>
+    <button class="nav-item" onclick="show('cronograma')"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Cronograma</button>
+    <button class="nav-item" onclick="show('reglas')"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Reglas del cronograma</button>
+    <button class="nav-item" onclick="show('horas')"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>Horas óptimas</button>
   </div>
 
   <div class="nav-group">
     <div class="nav-group-label">Horarios y rutinas</div>
-    <button class="nav-item" onclick="show('horario')"><span class="nav-dot" style="background:var(--amber)"></span>Horario por día</button>
-    <button class="nav-item" onclick="show('rutina-diaria')"><span class="nav-dot" style="background:var(--cb)"></span>Rutina diaria</button>
-    <button class="nav-item" onclick="show('rutina-semanal')"><span class="nav-dot" style="background:var(--blue)"></span>Rutina semanal</button>
-    <button class="nav-item" onclick="show('rutina-mensual')"><span class="nav-dot" style="background:var(--purple)"></span>Rutina mensual</button>
+    <button class="nav-item" onclick="show('horario')"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>Horario por día</button>
+    <button class="nav-item" onclick="show('rutina-diaria')"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Rutina diaria</button>
+    <button class="nav-item" onclick="show('rutina-semanal')"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Rutina semanal</button>
+    <button class="nav-item" onclick="show('rutina-mensual')"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>Rutina mensual</button>
   </div>
 
   <div class="nav-group">
     <div class="nav-group-label">Shows</div>
-    <button class="nav-item" onclick="show('antes')"><span class="nav-dot" style="background:var(--green)"></span>Antes del show</button>
-    <button class="nav-item" onclick="show('durante')"><span class="nav-dot" style="background:var(--amber)"></span>Durante el show</button>
-    <button class="nav-item" onclick="show('despues')"><span class="nav-dot" style="background:var(--pink)"></span>Después del show</button>
+    <button class="nav-item" onclick="show('antes')"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polygon points="10 8 16 12 10 16 10 8"/></svg>Antes del show</button>
+    <button class="nav-item" onclick="show('durante')"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>Durante el show</button>
+    <button class="nav-item" onclick="show('despues')"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Después del show</button>
   </div>
 
   <div class="nav-group">
     <div class="nav-group-label">Dual Streaming</div>
-    <button class="nav-item" onclick="show('dual')"><span class="nav-dot" style="background:var(--sc)"></span>CB + Stripchat</button>
-    <button class="nav-item" onclick="show('privados')"><span class="nav-dot" style="background:var(--rose)"></span>Shows privados SC</button>
-    <button class="nav-item" onclick="show('privados-cb')"><span class="nav-dot" style="background:var(--cb)"></span>Shows privados CB</button>
-    <button class="nav-item" onclick="show('fanclub')"><span class="nav-dot" style="background:var(--gold)"></span>Club de Fans CB + SC</button>
+    <button class="nav-item" onclick="show('dual')"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>CB + Stripchat</button>
+    <button class="nav-item" onclick="show('privados')"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Shows privados SC</button>
+    <button class="nav-item" onclick="show('privados-cb')"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Shows privados CB</button>
+    <button class="nav-item" onclick="show('fanclub')"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>Club de Fans CB + SC</button>
   </div>
 
   <div class="nav-group">
     <div class="nav-group-label">Estrategia</div>
-    <button class="nav-item" onclick="show('embudo')"><span class="nav-dot" style="background:var(--gold)"></span>Embudo</button>
-    <button class="nav-item" onclick="show('onlyfans')"><span class="nav-dot" style="background:var(--rose)"></span>OnlyFans</button>
-    <button class="nav-item" onclick="show('scripts')"><span class="nav-dot" style="background:var(--green)"></span>Scripts</button>
-    <button class="nav-item" onclick="show('tematicas')"><span class="nav-dot" style="background:var(--amber)"></span>Banco de temáticas</button>
-    <button class="nav-item" onclick="show('publicaciones')"><span class="nav-dot" style="background:var(--pink)"></span>Plan publicaciones</button>
+    <button class="nav-item" onclick="show('embudo')"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>Embudo</button>
+    <button class="nav-item" onclick="show('onlyfans')"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>OnlyFans</button>
+    <button class="nav-item" onclick="show('scripts')"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>Scripts</button>
+    <button class="nav-item" onclick="show('tematicas')"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 2a10 10 0 0 0 0 20 1.5 1.5 0 0 0 1-2.6 1.5 1.5 0 0 1 1-2.6h2a5 5 0 0 0 5-5A10 10 0 0 0 12 2z"/></svg>Banco de temáticas</button>
+    <button class="nav-item" onclick="show('publicaciones')"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.17L4 17.17V4z"/><line x1="8" y1="9" x2="16" y2="9"/></svg>Plan publicaciones</button>
   </div>
 
   <div class="nav-group">
     <div class="nav-group-label">Sistema</div>
-    <button class="nav-item" onclick="show('goals')"><span class="nav-dot" style="background:var(--gold)"></span>Goals por colores</button>
-    <button class="nav-item" onclick="show('kpis')"><span class="nav-dot" style="background:var(--blue)"></span>KPIs y rangos</button>
-    <button class="nav-item" onclick="show('escenarios')"><span class="nav-dot" style="background:var(--purple)"></span>Si pasa X, haz Y</button>
-    <button class="nav-item" onclick="show('analizador')"><span class="nav-dot" style="background:var(--green)"></span>Analizador CB + SC</button>
-    <button class="nav-item" onclick="show('reporte')"><span class="nav-dot" style="background:var(--text3)"></span>Reporte</button>
-    <button class="nav-item" onclick="show('contexto')"><span class="nav-dot" style="background:var(--blue)"></span>Contexto del proyecto</button>
+    <button class="nav-item" onclick="show('goals')"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>Goals por colores</button>
+    <button class="nav-item" onclick="show('kpis')"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>KPIs y rangos</button>
+    <button class="nav-item" onclick="show('escenarios')"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>Si pasa X, haz Y</button>
+    <button class="nav-item" onclick="show('analizador')"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Analizador CB + SC</button>
+    <button class="nav-item" onclick="show('reporte')"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Reporte</button>
+    <button class="nav-item" onclick="show('contexto')"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>Contexto del proyecto</button>
   </div>
 
   <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
@@ -597,8 +632,26 @@ p strong{color:var(--text);font-weight:500;}
 
 <!-- ═══ DASHBOARD ═══ -->
 <div class="panel active" id="panel-dashboard">
-  <div class="eyebrow">theirismuse · sistema completo v2.0</div>
-  <h1 class="page-title">Dashboard<br><em>estado actual · CB + SC</em></h1>
+  <!-- Header estilo dashboard: título + campana de notificaciones + cuenta -->
+  <div class="dash-header">
+    <div class="dash-header-title">
+      <h1 class="page-title" style="margin-bottom:2px;">Dashboard<em>estado actual · CB + SC</em></h1>
+    </div>
+    <div class="dash-header-actions">
+      <button class="hdr-btn" id="notif-bell-btn" onclick="toggleNotifPanel()" aria-label="Recordatorios de hoy">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="19" height="19"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="hdr-badge" id="notif-bell-badge" style="display:none;">0</span>
+      </button>
+      <div class="hdr-account" id="hdr-account" title="Cuenta">
+        <span id="hdr-account-dot" style="width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0;"></span>
+        <span id="hdr-account-label">no conectada</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel desplegable de recordatorios del día -->
+  <div id="notif-panel" class="notif-panel" style="display:none;"></div>
+
 
   <div class="stat-row">
     <div class="stat-card"><div class="sl">CB seguidores</div><div class="sv" id="dash_cb_fans">26,989</div><div class="ss" style="color:var(--green)">↑ +20 · vie 8 may</div></div>
@@ -764,7 +817,7 @@ p strong{color:var(--text);font-weight:500;}
       <div style="font-family:var(--serif);font-size:15px;color:var(--gold);margin-bottom:3px;">🔔 Recordatorios del plan de hoy</div>
       <div id="notif-status" style="font-size:11px;color:var(--text3);line-height:1.5;">Recibe un aviso 5 min antes de cada publicación, aunque la app esté cerrada (con la PWA instalada).</div>
     </div>
-    <button id="notif-toggle-btn" onclick="notifToggle()" style="display:flex;align-items:center;gap:7px;background:rgba(200,146,26,.12);border:1px solid var(--gold);color:var(--gold);border-radius:8px;padding:10px 16px;font-size:12px;font-family:var(--sans);cursor:pointer;white-space:nowrap;transition:all .15s;">
+    <button id="notif-toggle-btn" onclick="notifToggle()" style="display:flex;align-items:center;gap:7px;background:rgba(169,223,216,.12);border:1px solid var(--gold);color:var(--gold);border-radius:8px;padding:10px 16px;font-size:12px;font-family:var(--sans);cursor:pointer;white-space:nowrap;transition:all .15s;">
       <span style="font-size:14px;">🔕</span> Activar notificaciones
     </button>
   </div>
@@ -1687,7 +1740,7 @@ p strong{color:var(--text);font-weight:500;}
         <strong>Tú controlas:</strong> precio mensual, beneficios, contenido exclusivo.
       </div>
     </div>
-    <div style="background:rgba(200,146,26,.05);border:1px solid rgba(200,146,26,.2);border-radius:8px;padding:16px;">
+    <div style="background:rgba(169,223,216,.05);border:1px solid rgba(169,223,216,.2);border-radius:8px;padding:16px;">
       <div style="font-family:var(--mono);font-size:11px;font-weight:500;color:var(--gold);margin-bottom:10px;">● POR QUÉ ACTIVARLO YA</div>
       <div style="font-size:12.5px;color:var(--text2);line-height:1.7;">
         26,759 seguidores en CB. Si el <strong style="color:var(--text)">0.1%</strong> se suscribe al Fan Club → <strong style="color:var(--gold)">26 suscriptores</strong><br>
@@ -2406,7 +2459,7 @@ CB & SC — let's end 2026 together 💜🖤</div>
     width:14px;height:14px;border-radius:50%;border:1px solid var(--border2);
     color:var(--text3);font-family:var(--sans);font-size:9px;font-weight:600;line-height:1;
     cursor:help;flex-shrink:0;user-select:none;transition:all .15s;text-transform:none;letter-spacing:0;}
-  .fhelp:hover,.fhelp.open{border-color:var(--gold);color:var(--gold);background:rgba(200,146,26,.1);}
+  .fhelp:hover,.fhelp.open{border-color:var(--gold);color:var(--gold);background:rgba(169,223,216,.1);}
   .fhelp .fhelp-pop{position:absolute;bottom:calc(100% + 8px);left:-8px;
     width:230px;max-width:72vw;background:var(--surface);border:1px solid var(--gold);border-radius:8px;
     padding:10px 12px;font-family:var(--sans);font-size:11px;line-height:1.5;color:var(--text2);
@@ -2434,8 +2487,8 @@ CB & SC — let's end 2026 together 💜🖤</div>
   .rep-field input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;}
   /* ── Botón de acumulación (calcular desde diarios) ── */
   .acc-box{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
-    background:linear-gradient(to right,rgba(200,146,26,.08),rgba(200,146,26,.02));
-    border:1px solid rgba(200,146,26,.25);border-radius:9px;padding:14px 16px;margin-bottom:18px;}
+    background:linear-gradient(to right,rgba(169,223,216,.08),rgba(169,223,216,.02));
+    border:1px solid rgba(169,223,216,.25);border-radius:9px;padding:14px 16px;margin-bottom:18px;}
   .acc-txt{flex:1;min-width:200px;}
   .acc-title{font-family:var(--serif);font-size:15px;color:var(--gold);margin-bottom:3px;}
   .acc-sub{font-size:11px;color:var(--text2);line-height:1.5;}
@@ -2447,7 +2500,7 @@ CB & SC — let's end 2026 together 💜🖤</div>
   .rep-toggle label{display:flex;align-items:center;gap:5px;cursor:pointer;font-family:var(--mono);font-size:11px;color:var(--text2);background:var(--bg3);border:1px solid var(--border2);padding:6px 12px;border-radius:4px;transition:all .15s;}
   .rep-toggle input[type=radio]{display:none;}
   .rep-toggle input[type=radio]:checked + span{color:var(--gold);}
-  .rep-toggle label:has(input:checked){border-color:var(--gold);background:rgba(200,146,26,.1);color:var(--gold);}
+  .rep-toggle label:has(input:checked){border-color:var(--gold);background:rgba(169,223,216,.1);color:var(--gold);}
   .rep-goal-row{display:grid;grid-template-columns:80px 1fr 80px;gap:8px;align-items:center;margin-bottom:6px;}
   .rep-goal-label{font-family:var(--mono);font-size:9px;color:var(--text3);}
   .rep-save-btn{width:100%;padding:12px;background:var(--gold);color:var(--bg);font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.1em;border:none;border-radius:6px;cursor:pointer;transition:all .15s;text-transform:uppercase;}
@@ -2557,7 +2610,7 @@ CB & SC — let's end 2026 together 💜🖤</div>
         <div class="rep-section-title" style="color:var(--sc)">● Stripchat</div>
         <div class="rep-grid">
           <div class="rep-field"><label>Ingresos totales ($)</label><input type="number" id="s_sc_total" step="0.01" placeholder="0.00" oninput="calcScHoy()"></div>
-          <div class="rep-field"><label>Ingresos/hora HOY ($) <span style="color:var(--gold);font-size:9px;">● auto</span></label><input type="number" id="s_sc_hoy" step="0.01" placeholder="auto" readonly style="color:var(--gold2);border-color:rgba(200,146,26,.3);"></div>
+          <div class="rep-field"><label>Ingresos/hora HOY ($) <span style="color:var(--gold);font-size:9px;">● auto</span></label><input type="number" id="s_sc_hoy" step="0.01" placeholder="auto" readonly style="color:var(--gold2);border-color:rgba(169,223,216,.3);"></div>
           <div class="rep-field"><label>Ingresos/hora prom 30h ($)</label><input type="number" id="s_sc_30h" step="0.01" placeholder="23.30"></div>
           <div class="rep-field"><label>Nuevos favoritos</label><input type="number" id="s_sc_new_fans" placeholder="0"></div>
           <div class="rep-field"><label>Total favoritos</label><input type="number" id="s_sc_total_fans" placeholder="31525"></div>
@@ -2714,14 +2767,14 @@ CB & SC — let's end 2026 together 💜🖤</div>
       <div class="rep-section">
         <div class="rep-section-title" style="color:var(--sc)">● Stripchat</div>
         <div class="rep-grid">
-          <div class="rep-field"><label>Ingresos totales ($) <span style="color:var(--gold);font-size:9px;">● auto/manual</span></label><input type="number" id="w_sc_total" step="0.01" placeholder="escribe o usa el analizador" style="color:var(--gold2);border-color:rgba(200,146,26,.3);"></div>
+          <div class="rep-field"><label>Ingresos totales ($) <span style="color:var(--gold);font-size:9px;">● auto/manual</span></label><input type="number" id="w_sc_total" step="0.01" placeholder="escribe o usa el analizador" style="color:var(--gold2);border-color:rgba(169,223,216,.3);"></div>
           <div class="rep-field"><label>Privados realizados (min)</label><input type="number" id="w_sc_priv_dur" placeholder="0"></div>
           <div class="rep-field"><label>Tipo privado SC</label><input type="text" id="w_sc_priv_tipo" placeholder="Exclusivo / Regular"></div>
           <div class="rep-field"><label>Ingresos/hora prom 30h ($)</label><input type="number" id="w_sc_30h" step="0.01" placeholder="23.30"></div>
           <div class="rep-field"><label>SC StripScore</label><input type="number" id="w_sc_stripscore" placeholder="606" oninput="updateStripScore()"></div>
           <div class="rep-field"><label>Rating privados SC</label><input type="number" id="w_sc_rating" step="0.1" placeholder="4.7" oninput="updateScRating()"></div>
           <div class="rep-field"><label>Próximo pago SC (tk)</label><input type="number" id="w_sc_pago_tk" placeholder="5799" oninput="calcScPago()"></div>
-          <div class="rep-field"><label>Próximo pago SC (~$) <span style="color:var(--gold);font-size:9px;">● auto</span></label><input type="number" id="w_sc_pago_usd" step="0.01" placeholder="auto" readonly style="color:var(--gold2);border-color:rgba(200,146,26,.3);"></div>
+          <div class="rep-field"><label>Próximo pago SC (~$) <span style="color:var(--gold);font-size:9px;">● auto</span></label><input type="number" id="w_sc_pago_usd" step="0.01" placeholder="auto" readonly style="color:var(--gold2);border-color:rgba(169,223,216,.3);"></div>
           <div class="rep-field"><label>Favoritos inicio semana</label><input type="number" id="w_sc_fans_start" placeholder="31525"></div>
           <div class="rep-field"><label>Favoritos fin semana</label><input type="number" id="w_sc_fans_end" placeholder="0"></div>
           <div class="rep-field"><label>SC Fan Club total</label><input type="number" id="w_sc_fc" placeholder="3"></div>
@@ -2889,7 +2942,7 @@ CB & SC — let's end 2026 together 💜🖤</div>
   <style>
   .anz-tabs{display:flex;gap:8px;margin-bottom:20px;}
   .anz-tab{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:8px 16px;border-radius:5px;border:1px solid var(--border2);background:var(--bg3);color:var(--text3);cursor:pointer;transition:all .15s;}
-  .anz-tab.active{background:rgba(200,146,26,.12);border-color:var(--gold);color:var(--gold);}
+  .anz-tab.active{background:rgba(169,223,216,.12);border-color:var(--gold);color:var(--gold);}
   .anz-paste-area{width:100%;min-height:160px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--text2);font-family:var(--mono);font-size:11px;padding:14px;resize:vertical;transition:border-color .15s;box-sizing:border-box;}
   .anz-paste-area:focus{outline:none;border-color:var(--gold);}
   .anz-btn{padding:12px 24px;background:var(--gold);color:var(--bg);font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.1em;border:none;border-radius:6px;cursor:pointer;transition:all .15s;text-transform:uppercase;margin-top:12px;}
@@ -4474,7 +4527,7 @@ function makePostTimesBlock(wd) {
     // Tip
     if (pt.content.tip) {
       const tip = document.createElement('div');
-      tip.style.cssText = 'background:rgba(200,146,26,.08);border-left:2px solid var(--gold);border-radius:3px;padding:7px 10px;margin-top:10px;font-size:10.5px;color:var(--gold2);line-height:1.5;font-style:italic;';
+      tip.style.cssText = 'background:rgba(169,223,216,.08);border-left:2px solid var(--gold);border-radius:3px;padding:7px 10px;margin-top:10px;font-size:10.5px;color:var(--gold2);line-height:1.5;font-style:italic;';
       tip.textContent = '💡 ' + pt.content.tip;
       box.appendChild(tip);
     }
@@ -4669,7 +4722,7 @@ function renderCal() {
 
     const cell = document.createElement('div');
     cell.style.cssText = `background:${tc.bg};border:1px solid ${isT?'var(--gold)':isW?'rgba(196,137,74,.2)':'var(--border)'};border-radius:8px;overflow:hidden;cursor:pointer;transition:border-color .15s,transform .1s;animation:fadeSlide .2s ease both;animation-delay:${(fd+d-1)*0.012}s;`;
-    if(isT) cell.style.boxShadow='0 0 0 1px rgba(200,146,26,.3)';
+    if(isT) cell.style.boxShadow='0 0 0 1px rgba(169,223,216,.3)';
     cell.onmouseover=()=>cell.style.transform='translateY(-1px)';
     cell.onmouseout=()=>cell.style.transform='translateY(0)';
 
@@ -4721,7 +4774,7 @@ function renderCal() {
       // social badge if has social posts
       if(data.social && data.social.length){
         const b2=document.createElement('span');
-        b2.style.cssText='font-family:var(--mono);font-size:8px;padding:2px 5px;border-radius:2px;background:rgba(200,146,26,.2);color:var(--gold2);display:inline-block;width:fit-content;';
+        b2.style.cssText='font-family:var(--mono);font-size:8px;padding:2px 5px;border-radius:2px;background:rgba(169,223,216,.2);color:var(--gold2);display:inline-block;width:fit-content;';
         b2.textContent = data.social.some(s=>s.toLowerCase().includes('teaser')) ? 'teaser' : 'post redes';
         badges.appendChild(b2);
       }
@@ -4758,7 +4811,7 @@ function renderCal() {
       }
       if(gd.social && gd.social.some(s=>s.toLowerCase().includes('teaser'))){
         const gb2=document.createElement('span');
-        gb2.style.cssText='font-family:var(--mono);font-size:8px;padding:2px 5px;border-radius:2px;background:rgba(200,146,26,.2);color:var(--gold2);display:inline-block;width:fit-content;';
+        gb2.style.cssText='font-family:var(--mono);font-size:8px;padding:2px 5px;border-radius:2px;background:rgba(169,223,216,.2);color:var(--gold2);display:inline-block;width:fit-content;';
         gb2.textContent='teaser';
         gbadges.appendChild(gb2);
       }
@@ -4768,7 +4821,7 @@ function renderCal() {
       gbadges.appendChild(gb3);
       if(gd.type !== 'rest') {
         const gb4=document.createElement('span');
-        gb4.style.cssText='font-family:var(--mono);font-size:8px;padding:2px 5px;border-radius:2px;background:rgba(200,146,26,.12);color:var(--gold);display:inline-block;width:fit-content;';
+        gb4.style.cssText='font-family:var(--mono);font-size:8px;padding:2px 5px;border-radius:2px;background:rgba(169,223,216,.12);color:var(--gold);display:inline-block;width:fit-content;';
         gb4.textContent='fan club';
         gbadges.appendChild(gb4);
       }
@@ -4954,7 +5007,7 @@ function makeGoals(goals, materials, showTitle, wd) {
         '<div style="font-family:var(--mono);font-size:9px;background:rgba(100,180,220,.1);border:1px solid rgba(100,180,220,.25);color:#7ab0d0;padding:2px 7px;border-radius:4px;text-align:center;white-space:nowrap;margin-bottom:3px;">CB ' + cbP + ' tk</div>' +
         '<div style="font-family:var(--mono);font-size:9px;background:rgba(233,105,57,.12);border:1px solid rgba(233,105,57,.3);color:#e86232;padding:2px 7px;border-radius:4px;text-align:center;white-space:nowrap;margin-bottom:5px;">SC ' + scP + ' tk</div>' +
         '<div style="font-family:var(--mono);font-size:8px;color:var(--gold);text-align:right;margin-bottom:2px;white-space:nowrap;">🎟 entrada/viewer</div>' +
-        '<div style="font-family:var(--mono);font-size:9px;background:rgba(200,146,26,.12);border:1px solid rgba(200,146,26,.35);color:var(--gold2);padding:2px 7px;border-radius:4px;text-align:center;white-space:nowrap;">' + cbTicketEntry + ' tk c/u</div>';
+        '<div style="font-family:var(--mono);font-size:9px;background:rgba(169,223,216,.12);border:1px solid rgba(169,223,216,.35);color:var(--gold2);padding:2px 7px;border-radius:4px;text-align:center;white-space:nowrap;">' + cbTicketEntry + ' tk c/u</div>';
     } else {
       prices.innerHTML =
         '<div style="font-family:var(--mono);font-size:9px;background:rgba(100,180,220,.1);border:1px solid rgba(100,180,220,.25);color:#7ab0d0;padding:2px 7px;border-radius:4px;text-align:center;white-space:nowrap;">CB ' + cbP + ' tk</div>' +
@@ -5163,6 +5216,131 @@ function notifFirePending() {
   }
 }
 
+// Construye la lista de recordatorios del plan de HOY para mostrarlos dentro del
+// dashboard (próximos y ya enviados). No dispara nada: solo lee el plan + la cola.
+function notifBuildTodayList() {
+  const now = new Date();
+  const wd = now.getDay();
+  let friShow = '', satShow = '', todayShow = 'el show de hoy';
+  try {
+    const y = now.getFullYear(), mo = now.getMonth(), da = now.getDate();
+    const friD = da + (5 - wd), satD = da + (6 - wd);
+    const friKey = y+'-'+String(mo+1).padStart(2,'0')+'-'+String(friD).padStart(2,'0');
+    const satKey = y+'-'+String(mo+1).padStart(2,'0')+'-'+String(satD).padStart(2,'0');
+    friShow = (DAY_DB[friKey] && DAY_DB[friKey].title) ? DAY_DB[friKey].title : pickPoolShow(5, mo*31+friD, y, mo, friD).show;
+    satShow = (DAY_DB[satKey] && DAY_DB[satKey].title) ? DAY_DB[satKey].title : pickPoolShow(6, mo*31+satD, y, mo, satD).show;
+    const key = y+'-'+String(mo+1).padStart(2,'0')+'-'+String(da).padStart(2,'0');
+    todayShow = (DAY_DB[key] && DAY_DB[key].title) ? DAY_DB[key].title : (wd===0 ? 'Descanso' : pickPoolShow(wd, mo*31+da, y, mo, da).show);
+  } catch(e) {}
+
+  const plan = buildDayPlan(wd, todayShow, friShow, satShow);
+  const out = [];
+  if (!plan || !plan.acciones) return out;
+
+  const todayTag = now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate();
+  let sentLog = {};
+  try { const raw = _store.getItem('tm_notif_sent_' + todayTag); if (raw) sentLog = JSON.parse(raw); } catch(e) {}
+
+  plan.acciones.forEach(a => {
+    const horaDate = notifParseHora(a.hora);
+    if (!horaDate) return;
+    const avisoTime = new Date(horaDate.getTime() - NOTIF_LEAD_MIN * 60000);
+    const sentKey = a.hora + '|' + a.plat;
+    out.push({
+      hora: a.hora,
+      avisoHora: avisoTime,
+      plat: a.plat,
+      platName: notifPlatName(a.plat),
+      accion: a.accion,
+      enviado: !!sentLog[sentKey],
+      pasado: now.getTime() >= horaDate.getTime()
+    });
+  });
+  // ordenar por hora de publicación
+  out.sort((x,y) => x.avisoHora.getTime() - y.avisoHora.getTime());
+  return out;
+}
+
+// ── PANEL DE RECORDATORIOS DENTRO DEL DASHBOARD ──────────────────────
+// Dibuja la lista de recordatorios del día (próximos + enviados) y actualiza
+// el badge de la campana con cuántos quedan pendientes.
+function renderNotifPanel() {
+  const panel = document.getElementById('notif-panel');
+  const badge = document.getElementById('notif-bell-badge');
+  if (!panel) return;
+
+  const enabled = (typeof notifGetEnabled === 'function') && notifGetEnabled();
+  const permOk = ('Notification' in window) && Notification.permission === 'granted';
+  let list = [];
+  try { list = notifBuildTodayList(); } catch(e) {}
+
+  const pendientes = list.filter(n => !n.enviado && !n.pasado).length;
+  // Badge de la campana
+  if (badge) {
+    if (enabled && pendientes > 0) { badge.textContent = pendientes; badge.style.display = ''; }
+    else { badge.style.display = 'none'; }
+  }
+
+  // Encabezado del panel + botón activar/desactivar
+  let html = '<div class="notif-panel-head">'
+    + '<div class="notif-panel-title">🔔 Recordatorios de hoy</div>'
+    + '<button class="acc-btn" style="padding:8px 16px;font-size:12px;" onclick="notifToggle().then(renderNotifPanel)">'
+    + (enabled ? 'Desactivar avisos' : 'Activar avisos') + '</button>'
+    + '</div>';
+
+  if (!enabled) {
+    html += '<div class="notif-empty">Activa los avisos para recibir un recordatorio 5 minutos antes de cada publicación del plan de hoy. Funcionan con la app abierta y, con la PWA instalada, también en segundo plano.</div>';
+  } else if (!permOk) {
+    html += '<div class="notif-empty">Tu navegador tiene bloqueadas las notificaciones. Actívalas desde el candado 🔒 de la barra de direcciones para recibir los recordatorios.</div>';
+  } else if (!list.length) {
+    html += '<div class="notif-empty">Hoy no hay publicaciones programadas (día de descanso). Mañana verás aquí los recordatorios del plan.</div>';
+  } else {
+    list.forEach(n => {
+      const hh = n.avisoHora.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', hour12: true });
+      let stateClass = 'pending', stateTxt = 'pendiente';
+      if (n.enviado) { stateClass = 'sent'; stateTxt = '✓ enviado'; }
+      else if (n.pasado) { stateClass = 'past'; stateTxt = 'pasado'; }
+      html += '<div class="notif-row">'
+        + '<div class="notif-time">' + hh + '</div>'
+        + '<div class="notif-body"><div class="notif-plat">' + n.platName + '</div>'
+        + '<div class="notif-act">' + (n.accion || '') + '</div></div>'
+        + '<div class="notif-state ' + stateClass + '">' + stateTxt + '</div>'
+        + '</div>';
+    });
+  }
+  panel.innerHTML = html;
+}
+
+// Abre/cierra el panel de recordatorios (desde la campana del header)
+function toggleNotifPanel() {
+  const panel = document.getElementById('notif-panel');
+  const bell = document.getElementById('notif-bell-btn');
+  if (!panel) return;
+  const open = panel.style.display !== 'none';
+  if (open) {
+    panel.style.display = 'none';
+    if (bell) bell.classList.remove('on');
+  } else {
+    renderNotifPanel();
+    panel.style.display = '';
+    if (bell) bell.classList.add('on');
+  }
+}
+
+// Actualiza el indicador de cuenta en el header del dashboard.
+function updateHeaderAccount() {
+  const dot = document.getElementById('hdr-account-dot');
+  const label = document.getElementById('hdr-account-label');
+  if (!label) return;
+  if (typeof sbUser !== 'undefined' && sbUser) {
+    label.textContent = sbUser.email ? sbUser.email.split('@')[0] : 'conectada';
+    if (dot) dot.style.background = 'var(--green)';
+  } else {
+    label.textContent = 'no conectada';
+    if (dot) dot.style.background = 'var(--text3)';
+  }
+}
+
 // Muestra una notificación (vía service worker si está disponible, si no directo)
 function notifShow(title, body, accion) {
   const opts = {
@@ -5364,7 +5542,7 @@ function notifUpdateButton() {
   btn.innerHTML = on
     ? '<span style="font-size:14px;">🔔</span> Notificaciones activas'
     : '<span style="font-size:14px;">🔕</span> Activar notificaciones';
-  btn.style.background = on ? 'rgba(122,176,120,.15)' : 'rgba(200,146,26,.12)';
+  btn.style.background = on ? 'rgba(122,176,120,.15)' : 'rgba(169,223,216,.12)';
   btn.style.borderColor = on ? 'var(--green)' : 'var(--gold)';
   btn.style.color = on ? 'var(--green)' : 'var(--gold)';
 
@@ -5612,7 +5790,7 @@ function makeUnifiedPlan(wd, show, nextFri, nextSat) {
         doCopy(a.caption);
         copyHint.textContent = '✓ copiado';
         copyHint.style.color = 'var(--gold)';
-        capWrap.style.background = 'rgba(200,146,26,.08)';
+        capWrap.style.background = 'rgba(169,223,216,.08)';
         setTimeout(() => {
           copyHint.textContent = '📋 clic para copiar';
           copyHint.style.color = 'var(--text3)';
@@ -6185,7 +6363,7 @@ function makeMonthlyPrep(month, year) {
   const save = () => { try { _store.setItem(storeKey, JSON.stringify(state)); } catch(e) {} };
 
   const wrap = document.createElement('div');
-  wrap.style.cssText = 'grid-column:1/-1;background:linear-gradient(135deg,rgba(200,146,26,.07),rgba(224,122,158,.04));border:1px solid var(--gold);border-radius:12px;padding:22px 24px;margin-bottom:4px;';
+  wrap.style.cssText = 'grid-column:1/-1;background:linear-gradient(135deg,rgba(169,223,216,.07),rgba(224,122,158,.04));border:1px solid var(--gold);border-radius:12px;padding:22px 24px;margin-bottom:4px;';
 
   const title = document.createElement('div');
   title.style.cssText = 'font-family:var(--serif);font-size:23px;color:var(--gold);margin-bottom:3px;';
@@ -6196,7 +6374,7 @@ function makeMonthlyPrep(month, year) {
   temaLine.textContent = g.tema;
   wrap.appendChild(temaLine);
   const enfoque = document.createElement('div');
-  enfoque.style.cssText = 'font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:6px;font-style:italic;padding-bottom:14px;border-bottom:1px solid rgba(200,146,26,.2);';
+  enfoque.style.cssText = 'font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:6px;font-style:italic;padding-bottom:14px;border-bottom:1px solid rgba(169,223,216,.2);';
   enfoque.textContent = g.enfoque;
   wrap.appendChild(enfoque);
 
@@ -6207,7 +6385,7 @@ function makeMonthlyPrep(month, year) {
 
   const sectionTitle = (txt, emoji) => {
     const t = document.createElement('div');
-    t.style.cssText = 'font-family:var(--mono);font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin:18px 0 10px;padding-top:14px;border-top:1px solid rgba(200,146,26,.2);';
+    t.style.cssText = 'font-family:var(--mono);font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin:18px 0 10px;padding-top:14px;border-top:1px solid rgba(169,223,216,.2);';
     t.textContent = (emoji?emoji+' ':'') + txt;
     return t;
   };
@@ -6273,7 +6451,7 @@ function makeMonthlyPrep(month, year) {
     g.tipMenuPerm.forEach(item => {
       const row = document.createElement('div');
       row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;background:var(--bg3);border-radius:6px;padding:9px 13px;margin-bottom:5px;';
-      row.innerHTML = '<span style="font-size:12.5px;color:var(--text);">' + item.name + '</span><span style="font-family:var(--mono);font-size:11px;color:var(--gold2);background:rgba(200,146,26,.1);border:1px solid rgba(200,146,26,.25);border-radius:4px;padding:3px 9px;">' + item.price + ' tk</span>';
+      row.innerHTML = '<span style="font-size:12.5px;color:var(--text);">' + item.name + '</span><span style="font-family:var(--mono);font-size:11px;color:var(--gold2);background:rgba(169,223,216,.1);border:1px solid rgba(169,223,216,.25);border-radius:4px;padding:3px 9px;">' + item.price + ' tk</span>';
       wrap.appendChild(row);
     });
   }
@@ -7510,7 +7688,7 @@ function updateFieldRefs() {
     if (!fm) return;
     const val = _lastRealValue(fm.field, fm.prefix);
     if (val !== null && val !== undefined && String(val).trim() !== '') {
-      el.placeholder = 'último: ' + val;
+      el.placeholder = String(val);
     } else {
       el.placeholder = 'Ingresa un valor';
     }
@@ -7539,7 +7717,7 @@ function updateToggleRefs() {
         ref.className = 'toggle-ref';
         group.parentElement.appendChild(ref);
       }
-      ref.textContent = 'último registro: ' + txt;
+      ref.textContent = 'registro: ' + txt;
     } else if (ref) {
       ref.remove(); // sin historial → no mostrar nota
     }
@@ -7659,7 +7837,7 @@ function buildBestTimes(wd) {
 
   const colors = { 'Twitter/X': 'rgba(58,106,138,.2)', 'Instagram': 'rgba(192,96,128,.2)' };
   const textColors = { 'Twitter/X': '#7ab0d0', 'Instagram': '#e090b0' };
-  const tipoBadge = { 'Post': 'rgba(200,146,26,.15)', 'Reel': 'rgba(122,94,165,.2)', 'Story': 'rgba(90,158,111,.15)' };
+  const tipoBadge = { 'Post': 'rgba(169,223,216,.15)', 'Reel': 'rgba(122,94,165,.2)', 'Story': 'rgba(90,158,111,.15)' };
   const tipoText = { 'Post': 'var(--gold)', 'Reel': 'var(--purple)', 'Story': 'var(--green)' };
 
   const block = document.createElement('div');
@@ -8241,16 +8419,28 @@ let sbClient = null;
 let sbUser = null;
 
 function sbInit() {
-  if (typeof supabase === 'undefined') { console.warn('Supabase not loaded'); return; }
+  // La librería de Supabase llega por CDN y puede tardar. Reintentar unas veces
+  // antes de rendirse; si al final no está, igual mostramos el login (los datos
+  // locales siguen disponibles y la nube se activa al reconectar).
+  if (typeof supabase === 'undefined') {
+    sbInit._tries = (sbInit._tries || 0) + 1;
+    if (sbInit._tries <= 20) { setTimeout(sbInit, 400); return; }
+    console.warn('Supabase no disponible tras varios intentos');
+    if (typeof sbShowLogin === 'function') sbShowLogin();
+    return;
+  }
   sbClient = supabase.createClient(SB_URL, SB_KEY);
   sbClient.auth.getSession().then(function(result) {
     var session = result.data && result.data.session;
     if (session) {
       sbUser = session.user;
       sbOnLogin();
-      // Auto-sincroniza desde la nube al abrir/recargar la app o instalarla,
-      // sin tener que tocar el botón "Cargar desde la nube".
+      // Auto-sincroniza desde la nube al abrir/recargar la app o instalarla.
       sbLoadAll();
+    } else {
+      // LOGIN OBLIGATORIO: sin sesión no hay sincronización en la nube, así que
+      // pedimos iniciar sesión. La nube es la fuente principal de los datos.
+      if (typeof sbShowLogin === 'function') sbShowLogin();
     }
   });
   sbClient.auth.onAuthStateChange(function(event, session) {
@@ -8258,6 +8448,8 @@ function sbInit() {
       sbUser = session.user; sbOnLogin(); sbHideModal(); sbLoadAll();
     } else if (event === 'SIGNED_OUT') {
       sbUser = null; sbOnLogout();
+      // Al cerrar sesión, volver a pedir login (la nube es obligatoria).
+      if (typeof sbShowLogin === 'function') sbShowLogin();
     }
   });
 }
@@ -8271,6 +8463,7 @@ function sbOnLogin() {
   document.getElementById('sb-sync-btn').style.display = '';
   document.getElementById('sb-upload-btn').style.display = '';
   document.getElementById('sb-logout-btn').style.display = '';
+  if (typeof updateHeaderAccount === 'function') updateHeaderAccount();
 }
 function sbOnLogout() {
   sbSetStatus('● no conectada', 'var(--text3)');
@@ -8278,6 +8471,7 @@ function sbOnLogout() {
   document.getElementById('sb-sync-btn').style.display = 'none';
   document.getElementById('sb-upload-btn').style.display = 'none';
   document.getElementById('sb-logout-btn').style.display = 'none';
+  if (typeof updateHeaderAccount === 'function') updateHeaderAccount();
 }
 function sbShowLogin() {
   document.getElementById('sb-modal').style.display = 'flex';
@@ -8352,17 +8546,9 @@ async function sbLoadAll() {
       localStorage.setItem(data[i].key, data[i].value);
     }
     sbSetStatus('● ' + sbUser.email + ' ✓', 'var(--green)');
-    if (typeof renderStreamHistory === 'function') renderStreamHistory();
-    if (typeof renderWeekHistory === 'function') renderWeekHistory();
-    if (typeof renderMonthHistory === 'function') renderMonthHistory();
-    if (typeof loadRecFromLastReport === 'function') loadRecFromLastReport();
-    if (typeof loadLatestDashboard === 'function') loadLatestDashboard();
-    if (typeof loadDashboardFromReports === 'function') loadDashboardFromReports();
-    // Tras sincronizar desde la nube, refrescar las referencias (placeholders
-    // con el último valor real) sin rellenar ni seleccionar nada en el formulario.
-    if (typeof updateFieldRefs === 'function') updateFieldRefs();
-  if (typeof updateToggleRefs === 'function') updateToggleRefs();
-    if (typeof updateToggleRefs === 'function') updateToggleRefs();
+    // Repintar TODO el dashboard y los historiales con los datos recuperados
+    // de la nube (fuente principal). Idempotente, sin rellenar formularios.
+    if (typeof refreshAllFromStore === 'function') refreshAllFromStore();
   } catch(e) {
     sbSetStatus('● error al sincronizar', 'var(--rose)');
     console.error('SB load error:', e);
@@ -9070,7 +9256,7 @@ function updateAllDashboard(streamData, weekData) {
 const DASH_CHART_COLORS = {
   cb:   '#5b9bd5',   // Chaturbate — azul
   sc:   '#d96a94',   // Stripchat — rosa
-  of:   '#e8b84a',   // OnlyFans — dorado
+  of:   '#f6c177',   // OnlyFans — ámbar suave
   priv: '#6cc083',   // privados — verde
   fc:   '#3fb0a0',   // club de fans — teal
   grid: 'rgba(158,149,136,.12)',
@@ -9123,8 +9309,8 @@ function _baseOpts(extra){
         labels: { color: DASH_CHART_COLORS.txt, font: { family: "'DM Sans',sans-serif", size: 11 }, boxWidth: 12, boxHeight: 12, padding: 12, usePointStyle: true }
       },
       tooltip: {
-        backgroundColor: '#171511', borderColor: '#38342a', borderWidth: 1,
-        titleColor: '#e8b84a', bodyColor: '#e8e2d4',
+        backgroundColor: '#21222d', borderColor: '#3a3b4a', borderWidth: 1,
+        titleColor: '#a9dfd8', bodyColor: '#ffffff',
         titleFont: { family: "'DM Mono',monospace", size: 10 },
         bodyFont: { family: "'DM Sans',sans-serif", size: 12 },
         padding: 10, cornerRadius: 6, displayColors: true, usePointStyle: true
@@ -9232,10 +9418,10 @@ function _renderIngresos(){
 
   _dashCharts.ingresos = new Chart(el, {
     type:'doughnut',
-    data:{ labels: parts.map(p=>p.label), datasets:[{ data: parts.map(p=>p.val), backgroundColor: parts.map(p=>p.color), borderColor:'#171511', borderWidth:2, hoverOffset:6 }] },
+    data:{ labels: parts.map(p=>p.label), datasets:[{ data: parts.map(p=>p.val), backgroundColor: parts.map(p=>p.color), borderColor:'#21222d', borderWidth:2, hoverOffset:6 }] },
     options: _baseOpts({ cutout:'62%', plugins:{
       legend:{ position:'right', labels:{ color:DASH_CHART_COLORS.txt, font:{family:"'DM Sans',sans-serif",size:11}, boxWidth:12, boxHeight:12, padding:10, usePointStyle:true } },
-      tooltip:{ backgroundColor:'#171511', borderColor:'#38342a', borderWidth:1, titleColor:'#e8b84a', bodyColor:'#e8e2d4', padding:10, cornerRadius:6, usePointStyle:true,
+      tooltip:{ backgroundColor:'#21222d', borderColor:'#3a3b4a', borderWidth:1, titleColor:'#a9dfd8', bodyColor:'#ffffff', padding:10, cornerRadius:6, usePointStyle:true,
         callbacks:{ label:function(c){ const v=c.parsed; const pct = total?Math.round(v/total*100):0; return ' '+c.label+': $'+v.toFixed(0)+' ('+pct+'%)'; } } }
     } })
   });
@@ -9271,7 +9457,7 @@ function _renderCompare(){
     type:'bar',
     data:{ labels, datasets:[{ data, backgroundColor:colors, borderRadius:4, borderSkipped:false, maxBarThickness:90, categoryPercentage:0.6, barPercentage:0.9 }] },
     options: _baseOpts({ plugins:{ legend:{display:false},
-      tooltip:{ backgroundColor:'#171511', borderColor:'#38342a', borderWidth:1, titleColor:'#e8b84a', bodyColor:'#e8e2d4', padding:10, cornerRadius:6,
+      tooltip:{ backgroundColor:'#21222d', borderColor:'#3a3b4a', borderWidth:1, titleColor:'#a9dfd8', bodyColor:'#ffffff', padding:10, cornerRadius:6,
         callbacks:{ label:function(c){ return ' '+c.parsed.y.toLocaleString('es'); } } } },
       scales: _cat() })
   });
@@ -9303,7 +9489,7 @@ function _renderMetas(){
                   // barra de fondo gris hasta 100 mediante grace: usamos max 100
                   }] },
     options: _baseOpts({ indexAxis:'y', plugins:{ legend:{display:false},
-      tooltip:{ backgroundColor:'#171511', borderColor:'#38342a', borderWidth:1, titleColor:'#e8b84a', bodyColor:'#e8e2d4', padding:10, cornerRadius:6,
+      tooltip:{ backgroundColor:'#21222d', borderColor:'#3a3b4a', borderWidth:1, titleColor:'#a9dfd8', bodyColor:'#ffffff', padding:10, cornerRadius:6,
         callbacks:{ label:function(c){ const m=metas[c.dataIndex]; return ' '+c.parsed.x+'% · '+m.val.toLocaleString('es')+' de '+m.meta.toLocaleString('es'); } } } },
       scales:{
         x:{ beginAtZero:true, max:100, grid:{color:DASH_CHART_COLORS.grid,drawBorder:false}, ticks:{color:DASH_CHART_COLORS.tick,font:{family:"'DM Mono',monospace",size:9},callback:v=>v+'%'} },
@@ -9367,7 +9553,7 @@ function fillWeeklyFromAnalyzer(plat, result) {
     const el = document.getElementById(id);
     if (el && val !== null && val !== undefined && val !== '') {
       el.value = val;
-      el.style.borderColor = 'rgba(200,146,26,.5)';
+      el.style.borderColor = 'rgba(169,223,216,.5)';
       setTimeout(() => el.style.borderColor = '', 2000);
     }
   };
@@ -9382,7 +9568,7 @@ function fillWeeklyFromAnalyzer(plat, result) {
       const rate = Math.round(result.privadoTokens / result.privadoMinutos);
       const tipo = rate >= 55 ? 'Exclusivo (60 tk/min)' : 'Regular (30 tk/min)';
       const el = document.getElementById('w_cb_priv_tipo');
-      if (el) { el.value = tipo; el.style.borderColor = 'rgba(200,146,26,.5)'; setTimeout(() => el.style.borderColor = '', 2000); }
+      if (el) { el.value = tipo; el.style.borderColor = 'rgba(169,223,216,.5)'; setTimeout(() => el.style.borderColor = '', 2000); }
     }
     // Show confirmation
     showAnalyzerFill('CB → Reporte semanal actualizado');
@@ -9393,13 +9579,13 @@ function fillWeeklyFromAnalyzer(plat, result) {
     const ingresoUSD = (result.totalTokens * 0.05).toFixed(2);
     // w_sc_total is now auto/readonly — update it directly
     const scTotalEl = document.getElementById('w_sc_total');
-    if (scTotalEl) { scTotalEl.value = ingresoUSD; scTotalEl.style.borderColor = 'rgba(200,146,26,.5)'; setTimeout(() => scTotalEl.style.borderColor = '', 2000); }
+    if (scTotalEl) { scTotalEl.value = ingresoUSD; scTotalEl.style.borderColor = 'rgba(169,223,216,.5)'; setTimeout(() => scTotalEl.style.borderColor = '', 2000); }
     set('w_sc_priv_dur', result.privadoCount || '');
     // Tipo from breakdown
     if (result.privBreakdown && result.privBreakdown.length > 0) {
       const tipos = result.privBreakdown.map(p => p.tipo).join(' + ');
       const el = document.getElementById('w_sc_priv_tipo');
-      if (el) { el.value = tipos; el.style.borderColor = 'rgba(200,146,26,.5)'; setTimeout(() => el.style.borderColor = '', 2000); }
+      if (el) { el.value = tipos; el.style.borderColor = 'rgba(169,223,216,.5)'; setTimeout(() => el.style.borderColor = '', 2000); }
     }
     showAnalyzerFill('SC → Reporte semanal actualizado');
   }
@@ -9595,22 +9781,34 @@ const _store = {
 
   async _init() {
     if (this._ready) return;
-    // Load all tm_ keys from persistent storage into cache
+    // 1) Base inmediata: cargar TODO lo de localStorage al cache (síncrono y
+    //    siempre disponible en el mismo dispositivo/navegador).
     try {
-      const result = await window.storage.list('tm_');
-      if (result && result.keys) {
-        for (const key of result.keys) {
-          try {
-            const r = await window.storage.get(key);
-            if (r) this._cache[key] = r.value;
-          } catch(e) {}
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('tm_') && !this._cache.hasOwnProperty(k)) {
+          this._cache[k] = localStorage.getItem(k);
         }
       }
-    } catch(e) {
-      // fallback: use localStorage values already in cache from seeding
+    } catch(e) {}
+    // 2) Si existe la API de artifact (window.storage), fusionar también desde ahí.
+    if (typeof window !== 'undefined' && window.storage) {
+      try {
+        const result = await window.storage.list('tm_');
+        if (result && result.keys) {
+          for (const key of result.keys) {
+            try {
+              const r = await window.storage.get(key);
+              if (r && r.value !== undefined && r.value !== null) {
+                this._cache[key] = r.value;
+                try { localStorage.setItem(key, r.value); } catch(e) {}
+              }
+            } catch(e) {}
+          }
+        }
+      } catch(e) {}
     }
     this._ready = true;
-    // flush queued callbacks
     this._queue.forEach(fn => fn());
     this._queue = [];
   },
@@ -9669,25 +9867,39 @@ _store.setItem = function(key, value) {
   }
 };
 
-// Init on load
-if (window.storage) {
-  _store._init().then(() => {
-    // re-render histories after persistent data loads
-    if (typeof renderStreamHistory === 'function') renderStreamHistory();
-    if (typeof renderWeekHistory === 'function') renderWeekHistory();
-    if (typeof renderMonthHistory === 'function') renderMonthHistory();
-  });
+// Repinta todo el dashboard y los historiales con los datos actuales del cache.
+// Es idempotente: se puede llamar varias veces (al arrancar, tras cargar de la
+// nube, al volver al primer plano) y siempre refleja lo último que haya.
+function refreshAllFromStore() {
+  try { if (typeof renderStreamHistory === 'function') renderStreamHistory(); } catch(e){}
+  try { if (typeof renderWeekHistory === 'function') renderWeekHistory(); } catch(e){}
+  try { if (typeof renderMonthHistory === 'function') renderMonthHistory(); } catch(e){}
+  try { if (typeof loadLatestDashboard === 'function') loadLatestDashboard(); } catch(e){}
+  try { if (typeof loadRecFromLastReport === 'function') loadRecFromLastReport(); } catch(e){}
+  try { if (typeof loadDashboardFromReports === 'function') loadDashboardFromReports(); } catch(e){}
+  try { if (typeof updateFieldRefs === 'function') updateFieldRefs(); } catch(e){}
+  try { if (typeof updateToggleRefs === 'function') updateToggleRefs(); } catch(e){}
+  try { if (typeof renderNotifPanel === 'function') renderNotifPanel(); } catch(e){}
+  try { if (typeof updateHeaderAccount === 'function') updateHeaderAccount(); } catch(e){}
 }
 
 // ══════════════════════════════════════════
-// INIT
+// INIT  ·  arranque con recuperación automática de datos
 // ══════════════════════════════════════════
 show('dashboard');
 initReports();
-if (window.storage) loadLatestDashboard();
-loadRecFromLastReport();
-loadDashboardFromReports();
-sbInit();
+
+// Arranque asíncrono ordenado: PRIMERO cargar todos los datos persistidos
+// (localStorage + artifact storage), DESPUÉS pintar el dashboard, y en paralelo
+// iniciar sesión en la nube para recuperar/fusionar los últimos reportes.
+(async function bootDashboard() {
+  try { await _store._init(); } catch(e) { console.error('store init:', e); }
+  // Pintar con lo que haya localmente (inmediato, sin esperar a la nube)
+  refreshAllFromStore();
+  // Iniciar Supabase: si hay sesión, recupera de la nube y vuelve a pintar;
+  // si NO hay sesión, pide iniciar sesión (la nube es la fuente principal).
+  try { sbInit(); } catch(e) { console.error('sbInit:', e); }
+})();
 
 // Re-sincroniza desde la nube cuando la app vuelve al primer plano
 // (al reabrir la PWA instalada tras estar cerrada/minimizada, o al volver a la pestaña).
@@ -9703,21 +9915,22 @@ document.addEventListener('visibilitychange', function() {
 
 <!-- LOGIN MODAL -->
 <div id="sb-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;align-items:center;justify-content:center;">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px;width:320px;max-width:90vw;">
-    <div style="font-family:var(--mono);font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:16px;">theirismuse · acceso</div>
-    <div style="font-family:var(--serif);font-size:20px;color:var(--text);margin-bottom:24px;">Iniciar sesión</div>
-    <div id="sb-msg" style="font-family:var(--mono);font-size:10px;margin-bottom:12px;display:none;"></div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;width:340px;max-width:90vw;">
+    <div style="font-size:22px;font-weight:700;color:var(--mint);margin-bottom:4px;letter-spacing:-.01em;">theirismuse</div>
+    <div style="font-size:14px;color:var(--text);font-weight:600;margin-bottom:6px;">Inicia sesión para sincronizar</div>
+    <div style="font-size:12px;color:var(--text3);line-height:1.5;margin-bottom:20px;">Tus reportes se guardan en la nube con tu cuenta. Así los recuperas automáticamente al recargar, reinstalar o entrar desde otro dispositivo.</div>
+    <div id="sb-msg" style="font-size:12px;margin-bottom:12px;display:none;"></div>
     <div style="margin-bottom:12px;">
-      <label style="font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px;">Email</label>
-      <input id="sb-email" type="email" placeholder="tu@email.com" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:11px;box-sizing:border-box;">
+      <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:6px;font-weight:500;">Email</label>
+      <input id="sb-email" type="email" placeholder="tu@email.com" style="width:100%;padding:11px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:9px;color:var(--text);font-family:var(--sans);font-size:13px;box-sizing:border-box;">
     </div>
     <div style="margin-bottom:20px;">
-      <label style="font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px;">Contraseña</label>
-      <input id="sb-pass" type="password" placeholder="••••••••" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:11px;box-sizing:border-box;">
+      <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:6px;font-weight:500;">Contraseña</label>
+      <input id="sb-pass" type="password" placeholder="••••••••" style="width:100%;padding:11px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:9px;color:var(--text);font-family:var(--sans);font-size:13px;box-sizing:border-box;">
     </div>
-    <button onclick="sbLogin()" style="width:100%;padding:12px;background:var(--gold);color:var(--bg);font-family:var(--mono);font-size:11px;font-weight:500;border:none;border-radius:6px;cursor:pointer;margin-bottom:8px;">ENTRAR</button>
-    <button onclick="sbRegister()" style="width:100%;padding:10px;background:transparent;color:var(--text3);font-family:var(--mono);font-size:10px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;margin-bottom:6px;">Crear cuenta nueva</button>
-    <button onclick="sbHideModal()" style="width:100%;padding:8px;background:transparent;color:var(--text3);font-family:var(--mono);font-size:9px;border:none;cursor:pointer;">Cancelar</button>
+    <button onclick="sbLogin()" style="width:100%;padding:12px;background:var(--mint);color:#171821;font-family:var(--sans);font-size:14px;font-weight:600;border:none;border-radius:9px;cursor:pointer;margin-bottom:8px;">Entrar</button>
+    <button onclick="sbRegister()" style="width:100%;padding:11px;background:transparent;color:var(--text2);font-family:var(--sans);font-size:13px;border:1px solid var(--border2);border-radius:9px;cursor:pointer;margin-bottom:6px;">Crear cuenta nueva</button>
+    <button onclick="sbHideModal()" style="width:100%;padding:8px;background:transparent;color:var(--text3);font-family:var(--sans);font-size:11px;border:none;cursor:pointer;">Seguir sin sincronizar (solo este dispositivo)</button>
   </div>
 </div>
 
