@@ -5367,6 +5367,24 @@ function updateHeaderAccount() {
   }
 }
 
+// Refleja el estado de sincronización en el indicador de cuenta del header.
+function setHeaderSync(state, count) {
+  const dot = document.getElementById('hdr-account-dot');
+  const label = document.getElementById('hdr-account-label');
+  if (!label) return;
+  const email = (typeof sbUser !== 'undefined' && sbUser && sbUser.email) ? sbUser.email.split('@')[0] : '';
+  if (state === 'sync') {
+    label.textContent = 'sincronizando…';
+    if (dot) dot.style.background = 'var(--amber)';
+  } else if (state === 'ok') {
+    label.textContent = email || 'sincronizado';
+    if (dot) dot.style.background = 'var(--green)';
+  } else if (state === 'error') {
+    label.textContent = (email ? email + ' · ' : '') + 'sin conexión';
+    if (dot) dot.style.background = 'var(--rose)';
+  }
+}
+
 // Muestra una notificación (vía service worker si está disponible, si no directo)
 function notifShow(title, body, accion) {
   const opts = {
@@ -6635,6 +6653,47 @@ function makeEventBlock(evt, month, year, day) {
 }
 
 
+// Envuelve CUALQUIER bloque del detalle del día en un acordeón plegable.
+// Oculta el contenido original y pone un encabezado clicable (título + flecha)
+// que lo despliega/pliega. Cada bloque funciona de forma independiente.
+// `title` y `color`: texto y color del encabezado. Si no se pasan, intenta
+// deducir el título del primer texto del bloque.
+function makeCollapsible(block, title, color) {
+  if (!block) return block;
+  color = color || 'var(--mint)';
+  // Extraer el título del propio bloque si no se dio uno
+  if (!title) {
+    const firstTxt = block.querySelector('div,span,button');
+    title = firstTxt ? firstTxt.textContent.trim().split('\n')[0] : 'Sección';
+  }
+  // Mover todo el contenido actual del bloque a un contenedor plegable
+  const bodyWrap = document.createElement('div');
+  bodyWrap.className = 'block-body';
+  bodyWrap.style.cssText = 'display:none;margin-top:12px;';
+  while (block.firstChild) bodyWrap.appendChild(block.firstChild);
+  // Encabezado clicable
+  const head = document.createElement('button');
+  head.type = 'button';
+  head.className = 'block-head';
+  head.style.cssText = `display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;background:none;border:none;cursor:pointer;font-family:var(--mono);font-size:9.5px;color:${color};text-transform:uppercase;letter-spacing:.1em;text-align:left;padding:0;font-weight:500;`;
+  const lbl = document.createElement('span');
+  lbl.textContent = title;
+  const caret = document.createElement('span');
+  caret.textContent = '▸';
+  caret.style.cssText = `font-size:11px;color:${color};transition:transform .15s;flex-shrink:0;`;
+  head.appendChild(lbl);
+  head.appendChild(caret);
+  head.onclick = (ev) => {
+    ev.stopPropagation();
+    const open = bodyWrap.style.display !== 'none';
+    bodyWrap.style.display = open ? 'none' : '';
+    caret.textContent = open ? '▸' : '▾';
+  };
+  block.appendChild(head);
+  block.appendChild(bodyWrap);
+  return block;
+}
+
 function openDetail(key, d) {
   const panel = document.getElementById('detailPanel');
   const data = DAY_DB[key];
@@ -6651,8 +6710,8 @@ function openDetail(key, d) {
 
   // Día 1 del mes: mostrar bloque de Preparación Mensual al inicio
   if (d === 1) {
-    dpGrid.appendChild(makeMonthlyPrep(calM, calY));
-    dpGrid.appendChild(makeContentPlan(calM, calY));
+    dpGrid.appendChild(makeCollapsible(makeMonthlyPrep(calM, calY), 'Preparación del mes', 'var(--amber)'));
+    dpGrid.appendChild(makeCollapsible(makeContentPlan(calM, calY), 'Plan de contenido del mes', 'var(--teal)'));
   }
 
 
@@ -6660,6 +6719,7 @@ function openDetail(key, d) {
   function makeBlock(title, color, items) {
     const block = document.createElement('div');
     block.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;';
+    block._blockTitle = title; block._blockColor = color; // para el acordeón
     const h = document.createElement('div');
     h.style.cssText=`font-family:var(--mono);font-size:9px;color:${color};text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;`;
     h.textContent = title;
@@ -6805,7 +6865,7 @@ function openDetail(key, d) {
       data.platforms,
       data.desc,
     ].filter(Boolean);
-    dpGrid.appendChild(makeBlock('Horario & Plataformas', 'var(--blue)', schedItems));
+    dpGrid.appendChild(makeCollapsible(makeBlock('Horario & Plataformas', 'var(--blue)', schedItems), 'Horario & Plataformas', 'var(--blue)'));
 
     // Block 2: Goals del stream — o tareas de descanso si es domingo/rest
     {
@@ -6813,12 +6873,12 @@ function openDetail(key, d) {
       if (date.getDay() === 0 || data.type === 'rest') {
         // Domingo: descanso activo, sin goals de tokens
         const restTasks = (data.goals && data.goals.length) ? data.goals : _restTasks;
-        dpGrid.appendChild(makeRestTasks(restTasks));
+        dpGrid.appendChild(makeCollapsible(makeRestTasks(restTasks), 'Descanso de hoy', 'var(--green)'));
       } else {
         const goalsToShow = (data.goals && data.goals.length) ? data.goals : _restTasks;
         const goalsBlock = makeGoals(goalsToShow, data.prep || null, data.title || null, date.getDay());
         goalsBlock.style.gridColumn = '1 / -1';
-        dpGrid.appendChild(goalsBlock);
+        dpGrid.appendChild(makeCollapsible(goalsBlock, 'Goals del stream', 'var(--purple)'));
       }
     }
 
@@ -6839,28 +6899,28 @@ function openDetail(key, d) {
       _saturdayShow = (DAY_DB[_satKey] && DAY_DB[_satKey].title) ? DAY_DB[_satKey].title : pickPoolShow(6, _satDoy, calY, calM, _satD).show;
     }
     // NUEVO: bloque unificado de plan de publicaciones (hora → plataforma → acción → caption)
-    dpGrid.appendChild(makeUnifiedPlan(date.getDay(), data.title, _fridayShow, _saturdayShow));
+    dpGrid.appendChild(makeCollapsible(makeUnifiedPlan(date.getDay(), data.title, _fridayShow, _saturdayShow), 'Plan de publicaciones de hoy', 'var(--gold)'));
     // Detectar si hoy es una fecha especial y mostrar su apartado
     {
       const _evKey = String(calM+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
       const _yearEv = getYearEvents(calY);
       if (_yearEv[_evKey]) {
-        dpGrid.appendChild(makeEventBlock(_yearEv[_evKey], calM, calY, d));
+        dpGrid.appendChild(makeCollapsible(makeEventBlock(_yearEv[_evKey], calM, calY, d), 'Evento especial', 'var(--rose)'));
       }
     }
   } else {
     // Use generic day generator for full plan
     const gd = getGenericDay(key, d, date.getDay(), calY, calM);
     const schedItems = [gd.time, gd.platforms, gd.desc].filter(Boolean);
-    dpGrid.appendChild(makeBlock('Horario & Plataformas', 'var(--blue)', schedItems));
+    dpGrid.appendChild(makeCollapsible(makeBlock('Horario & Plataformas', 'var(--blue)', schedItems), 'Horario & Plataformas', 'var(--blue)'));
     {
       if (date.getDay() === 0 || gd.type === 'rest') {
         // Domingo: descanso activo, sin goals de tokens
-        dpGrid.appendChild(makeRestTasks(gd.goals));
+        dpGrid.appendChild(makeCollapsible(makeRestTasks(gd.goals), 'Descanso de hoy', 'var(--green)'));
       } else {
         const gdGoalsBlock = makeGoals(gd.goals, gd.prep || null, gd.title || null, date.getDay());
         gdGoalsBlock.style.gridColumn = '1 / -1';
-        dpGrid.appendChild(gdGoalsBlock);
+        dpGrid.appendChild(makeCollapsible(gdGoalsBlock, 'Goals del stream', 'var(--purple)'));
       }
     }
     // NUEVO: bloque unificado de plan de publicaciones (hora → plataforma → acción → caption)
@@ -6875,13 +6935,13 @@ function openDetail(key, d) {
       _gFriShow = (DAY_DB[_friKey] && DAY_DB[_friKey].title) ? DAY_DB[_friKey].title : pickPoolShow(5, _friDoy, calY, calM, _friD).show;
       _gSatShow = (DAY_DB[_satKey] && DAY_DB[_satKey].title) ? DAY_DB[_satKey].title : pickPoolShow(6, _satDoy, calY, calM, _satD).show;
     }
-    dpGrid.appendChild(makeUnifiedPlan(date.getDay(), gd.title, _gFriShow, _gSatShow));
+    dpGrid.appendChild(makeCollapsible(makeUnifiedPlan(date.getDay(), gd.title, _gFriShow, _gSatShow), 'Plan de publicaciones de hoy', 'var(--gold)'));
     // Detectar si hoy es una fecha especial y mostrar su apartado
     {
       const _evKey = String(calM+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
       const _yearEv = getYearEvents(calY);
       if (_yearEv[_evKey]) {
-        dpGrid.appendChild(makeEventBlock(_yearEv[_evKey], calM, calY, d));
+        dpGrid.appendChild(makeCollapsible(makeEventBlock(_yearEv[_evKey], calM, calY, d), 'Evento especial', 'var(--rose)'));
       }
     }
   }
@@ -8501,13 +8561,34 @@ function sbInit() {
   });
   sbClient.auth.onAuthStateChange(function(event, session) {
     if (event === 'SIGNED_IN' && session) {
-      sbUser = session.user; sbOnLogin(); sbHideModal(); sbLoadAll();
+      sbUser = session.user; sbOnLogin(); sbHideModal();
+      // Al iniciar sesión: primero subir a la nube cualquier reporte local que
+      // aún no esté allí (para no perder nada), y DESPUÉS cargar todo de la nube.
+      sbMergeLocalThenLoad();
     } else if (event === 'SIGNED_OUT') {
       sbUser = null; sbOnLogout();
       // Al cerrar sesión, volver a pedir login (la nube es obligatoria).
       if (typeof sbShowLogin === 'function') sbShowLogin();
     }
   });
+}
+
+// Sube los reportes locales a la nube (sin pisar nada por conflicto de clave,
+// el upsert fusiona) y luego recarga todo desde la nube como fuente principal.
+async function sbMergeLocalThenLoad() {
+  if (!sbClient || !sbUser) return;
+  try {
+    var keys = [];
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.startsWith('tm_') && k !== 'tm_notif_queue' && !k.startsWith('tm_notif_sent_')) keys.push(k);
+    }
+    Object.keys(_store._cache).forEach(function(k){ if (k.startsWith('tm_') && keys.indexOf(k)===-1 && k!=='tm_notif_queue' && !k.startsWith('tm_notif_sent_')) keys.push(k); });
+    // subir en paralelo lo que haya local
+    await Promise.all(keys.map(function(k){ return sbSave(k, _store.getItem(k)); }));
+  } catch(e) { console.error('merge local→nube:', e); }
+  // ahora la nube tiene todo: cargar de ahí
+  sbLoadAll();
 }
 function sbSetStatus(msg, color) {
   var el = document.getElementById('sb-status');
@@ -8590,24 +8671,36 @@ async function sbUploadAll() {
   }
   sbSetStatus('● ' + ok + ' registros subidos' + (fail ? ' (' + fail + ' errores)' : '') + ' ✓', 'var(--green)');
 }
-async function sbLoadAll() {
+async function sbLoadAll(_retry) {
   if (!sbClient || !sbUser) return;
+  _retry = _retry || 0;
   try {
     sbSetStatus('● sincronizando...', 'var(--gold)');
+    if (typeof setHeaderSync === 'function') setHeaderSync('sync');
     var result = await sbClient.from('reportes').select('key,value').eq('user_id', sbUser.id);
     if (result.error) throw result.error;
     var data = result.data || [];
+    // La nube es la fuente principal: volcar TODOS los reportes al almacenamiento
+    // local (cache + localStorage) para que las lecturas síncronas los vean.
     for (var i = 0; i < data.length; i++) {
       _store._cache[data[i].key] = data[i].value;
-      localStorage.setItem(data[i].key, data[i].value);
+      try { localStorage.setItem(data[i].key, data[i].value); } catch(e) {}
     }
     sbSetStatus('● ' + sbUser.email + ' ✓', 'var(--green)');
+    if (typeof setHeaderSync === 'function') setHeaderSync('ok', data.length);
     // Repintar TODO el dashboard y los historiales con los datos recuperados
-    // de la nube (fuente principal). Idempotente, sin rellenar formularios.
+    // de la nube. Idempotente, sin rellenar formularios.
     if (typeof refreshAllFromStore === 'function') refreshAllFromStore();
   } catch(e) {
-    sbSetStatus('● error al sincronizar', 'var(--rose)');
     console.error('SB load error:', e);
+    // Reintentar automáticamente ante fallo de red (hasta 3 veces, espera creciente)
+    if (_retry < 3) {
+      sbSetStatus('● reintentando sincronizar...', 'var(--amber)');
+      setTimeout(function(){ sbLoadAll(_retry + 1); }, 1500 * (_retry + 1));
+    } else {
+      sbSetStatus('● error al sincronizar', 'var(--rose)');
+      if (typeof setHeaderSync === 'function') setHeaderSync('error');
+    }
   }
 }
 
@@ -9810,11 +9903,13 @@ function applyDashboardUpdate(data) {
 }
 
 // ── LOAD LATEST STATS FROM STORE ON INIT ────────────────────────────
-async function loadLatestDashboard() {
+function loadLatestDashboard() {
+  // Lee de _store (localStorage + nube), SIN depender de window.storage
+  // (que solo existe dentro del entorno de Claude, no en el hosting/PWA).
   try {
-    const r = await window.storage.get('tm_latest_stats');
-    if (r && r.value) {
-      const d = JSON.parse(r.value);
+    const raw = _store.getItem('tm_latest_stats');
+    if (raw) {
+      const d = JSON.parse(raw);
       applyDashboardUpdate({
         cb_total_fans: d.cb_fans,
         sc_total_fans: d.sc_fans,
@@ -10069,3 +10164,4 @@ document.addEventListener('visibilitychange', function() {
 </script>
 </body>
 </html>
+      
