@@ -5396,14 +5396,30 @@ function notifShow(title, body, accion) {
     vibrate: [200, 100, 200],
     data: accion || {}
   };
-  if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
-    navigator.serviceWorker.ready.then(reg => {
-      reg.showNotification(title, opts).catch(() => {
-        try { new Notification(title, opts); } catch(e) {}
-      });
+
+  // Fallback directo con la API de Notification (funciona en PC y móvil con la
+  // pestaña/app abierta). Se usa si no hay Service Worker o si este tarda.
+  function fallbackNotif() {
+    try { new Notification(title, opts); return true; }
+    catch(e) { console.warn('Notification directa falló:', e); return false; }
+  }
+
+  // En Android/móvil, mostrar por el Service Worker es lo más fiable (y en
+  // algunos navegadores `new Notification()` ni existe). Pero NO debemos
+  // depender de que serviceWorker.ready se resuelva: le ponemos un límite de
+  // tiempo y, si no responde, usamos el fallback directo.
+  if ('serviceWorker' in navigator) {
+    let done = false;
+    const viaSW = navigator.serviceWorker.ready.then(reg => {
+      return reg.showNotification(title, opts).then(() => { done = true; });
     });
+    // Carrera: si el SW no mostró la notificación en 1.2s, usar el fallback.
+    const timeout = new Promise(resolve => setTimeout(resolve, 1200));
+    Promise.race([viaSW, timeout]).then(() => {
+      if (!done) fallbackNotif();
+    }).catch(() => { if (!done) fallbackNotif(); });
   } else {
-    try { new Notification(title, opts); } catch(e) {}
+    fallbackNotif();
   }
 }
 
