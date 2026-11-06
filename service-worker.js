@@ -5,7 +5,7 @@
 // Estrategia: network-first para el HTML (siempre la versión más nueva
 // si hay conexión), cache-first para recursos estáticos (fuentes).
 
-const CACHE_NAME = 'theirismuse-v3';
+const CACHE_NAME = 'theirismuse-v4';
 const APP_SHELL = [
   './',
   './index.html',
