@@ -140,6 +140,19 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 .notif-copy{flex-shrink:0;display:inline-flex;align-items:center;gap:5px;background:var(--mint-soft);border:1px solid var(--mint);color:var(--mint);font-family:var(--sans);font-size:11px;font-weight:600;padding:6px 11px;border-radius:7px;cursor:pointer;transition:all .15s;white-space:nowrap;}
 .notif-copy:hover{background:rgba(169,223,216,.2);}
 .notif-copy.done{background:rgba(126,214,160,.15);border-color:var(--green);color:var(--green);}
+/* Grupos desplegables: Pendientes / Enviadas */
+.notif-group{border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden;background:var(--bg3);}
+.notif-group:last-child{margin-bottom:0;}
+.notif-group-sum{display:flex;align-items:center;gap:9px;padding:11px 14px;cursor:pointer;list-style:none;user-select:none;font-family:var(--sans);}
+.notif-group-sum::-webkit-details-marker{display:none;}
+.notif-group-sum:hover{background:var(--surface2);}
+.notif-group-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.notif-group-label{font-size:13px;font-weight:700;color:var(--text);}
+.notif-group-count{font-size:11px;font-weight:600;color:var(--text3);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:1px 8px;min-width:22px;text-align:center;}
+.notif-group-chev{margin-left:auto;color:var(--text3);transition:transform .2s;flex-shrink:0;}
+.notif-group[open] .notif-group-chev{transform:rotate(180deg);}
+.notif-group-body{padding:4px 14px 10px;}
+.notif-group-body .notif-row-wrap:first-of-type .notif-row{border-top:none;}
 h2{font-family:var(--sans);font-size:20px;font-weight:700;margin-bottom:14px;color:var(--text);margin-top:32px;letter-spacing:-.01em;}
 h3{font-size:10.5px;font-weight:500;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin:26px 0 10px;}
 p{color:var(--text2);font-size:13.5px;line-height:1.72;margin-bottom:10px;}
@@ -5306,13 +5319,14 @@ function renderNotifPanel() {
     html += '<div class="notif-empty">Hoy no hay publicaciones programadas (día de descanso). Mañana verás aquí los recordatorios del plan.</div>';
   } else {
     const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    list.forEach(n => {
+
+    // Construye el HTML de una fila de recordatorio
+    const rowHtml = (n) => {
       const hh = n.avisoHora.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', hour12: true });
       let stateClass = 'pending', stateTxt = 'pendiente';
       if (n.enviado) { stateClass = 'sent'; stateTxt = '✓ enviado'; }
       else if (n.pasado) { stateClass = 'past'; stateTxt = 'pasado'; }
 
-      // Bloque del pie (caption) con botón de copiar, solo si hay texto para publicar
       let capBlock = '';
       if (n.caption && n.caption.trim()) {
         capBlock = '<div class="notif-cap">'
@@ -5322,8 +5336,7 @@ function renderNotifPanel() {
           + ' copiar</button>'
           + '</div>';
       }
-
-      html += '<div class="notif-row-wrap">'
+      return '<div class="notif-row-wrap">'
         + '<div class="notif-row">'
         + '<div class="notif-time">' + hh + '</div>'
         + '<div class="notif-body"><div class="notif-plat">' + n.platName + '</div>'
@@ -5332,7 +5345,30 @@ function renderNotifPanel() {
         + '</div>'
         + capBlock
         + '</div>';
-    });
+    };
+
+    // Separar en pendientes (aún por enviar, incluidas las "pasadas") y enviadas
+    const enviadas   = list.filter(n => n.enviado);
+    const pendientesL = list.filter(n => !n.enviado);
+
+    // Menú desplegable (se mantiene abierto/cerrado solo, con <details>).
+    // Pendientes abierto por defecto; enviadas cerrado.
+    const grupo = (titulo, arr, abierto, colorPunto) => {
+      if (!arr.length) return '';
+      const filas = arr.map(rowHtml).join('');
+      return '<details class="notif-group"' + (abierto ? ' open' : '') + '>'
+        + '<summary class="notif-group-sum">'
+        + '<span class="notif-group-dot" style="background:' + colorPunto + '"></span>'
+        + '<span class="notif-group-label">' + titulo + '</span>'
+        + '<span class="notif-group-count">' + arr.length + '</span>'
+        + '<svg class="notif-group-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="6 9 12 15 18 9"/></svg>'
+        + '</summary>'
+        + '<div class="notif-group-body">' + filas + '</div>'
+        + '</details>';
+    };
+
+    html += grupo('Pendientes', pendientesL, true, 'var(--amber)');
+    html += grupo('Enviadas',   enviadas,    false, 'var(--green)');
   }
   panel.innerHTML = html;
 }
@@ -8910,6 +8946,29 @@ function anzParseCB(text) {
   let privadoTokens = 0, privadoMinutos = 0, spyTokens = 0, spyCount = 0, privadoTipsExtra = 0;
   let privadoTimestamps = new Set();
 
+  // Subtipo de privado según la emisión que escribe Chaturbate en la acción:
+  //   "emisión prémium privada"  → Show premium privado (sin espías)
+  //   "show privado" / "emisión privada" → Show privado (regular)
+  // Devuelve 'premium' | 'regular' | null (no es privado).
+  function privTipo(action){
+    const a = action.toLowerCase();
+    const esEspia = a.includes('espía') || a.includes('espia') || a.includes('spy');
+    if (esEspia) return null;
+    const esPriv = a.includes('show privado') || a.includes('emisión prémium privada')
+      || a.includes('emision prémium privada') || a.includes('emisión premium privada')
+      || a.includes('emision premium privada') || a.includes('emisión privada')
+      || a.includes('emision privada') || (a.includes('privad') && !a.includes('propina'));
+    if (!esPriv) return null;
+    // "prémium"/"premium" marca el show premium privado
+    if (a.includes('prémium') || a.includes('premium')) return 'premium';
+    return 'regular';
+  }
+  // Acumuladores por tipo: tokens, timestamps (≈ minutos) y conteo de entradas
+  const privPorTipo = {
+    premium: { tokens: 0, ts: new Set(), entradas: 0 },
+    regular: { tokens: 0, ts: new Set(), entradas: 0 }
+  };
+
   const chrono = entries.slice().reverse();
   const enPrivadoFlag = new Map();
   {
@@ -8934,8 +8993,14 @@ function anzParseCB(text) {
     const a = e.action.toLowerCase();
     if (a.includes('espía') || a.includes('espia') || a.includes('spy')) {
       spyTokens += e.tokens; spyCount++; cats['Emisión espía'] = (cats['Emisión espía']||0)+e.tokens;
-    } else if (a.includes('show privado') || a.includes('emisión prémium privada') || a.includes('emisión privada') || (a.includes('privad') && !a.includes('propina'))) {
-      privadoTokens += e.tokens; privadoTimestamps.add(e.date); cats['Privado'] = (cats['Privado']||0)+e.tokens;
+    } else if (privTipo(e.action)) {
+      const tipo = privTipo(e.action);
+      privadoTokens += e.tokens; privadoTimestamps.add(e.date);
+      privPorTipo[tipo].tokens += e.tokens;
+      privPorTipo[tipo].ts.add(e.date);
+      privPorTipo[tipo].entradas++;
+      const catName = tipo === 'premium' ? 'Show premium privado' : 'Show privado';
+      cats[catName] = (cats[catName]||0)+e.tokens;
     } else if (a.includes('propina')) {
       const user = extractUser(e.action);
       if (user && user !== 'An\u00f3nimo') tippers[user] = (tippers[user]||0)+e.tokens;
@@ -8956,27 +9021,55 @@ function anzParseCB(text) {
   let privMinutos = privadoTimestamps.size;
   if (privMinutos <= 1 && privadoEntradas > 6) privMinutos = Math.max(1, Math.round(privadoEntradas/6));
 
+  // Minutos por tipo (misma heurística: 1 marca de tiempo ≈ 1 min; fallback por entradas)
+  function minutosDeTipo(d){
+    let m = d.ts.size;
+    if (m <= 1 && d.entradas > 6) m = Math.max(1, Math.round(d.entradas/6));
+    return m;
+  }
+  const premMin = minutosDeTipo(privPorTipo.premium);
+  const regMin  = minutosDeTipo(privPorTipo.regular);
+
+  // Sesiones por tipo (cambio de usuario o de tipo abre una nueva sesión)
   let sessions = 0, inPriv = false, lastPrivUser = null;
+  let premSesiones = 0, regSesiones = 0, lastTipo = null;
   for (const e of entries.slice().reverse()) {
     if (e.tokens <= 0) continue;
     const a = e.action.toLowerCase();
     const esEspia = a.includes('espía')||a.includes('espia')||a.includes('spy');
-    const isPriv = (a.includes('show privado')||a.includes('emisión prémium privada')||a.includes('emisión privada')||(a.includes('privad')&&!a.includes('propina'))) && !esEspia;
+    const tipoE = privTipo(e.action);
+    const isPriv = !!tipoE;
     const evUser = extractUser(e.action);
     const isTip = a.includes('propina');
-    if (isPriv) { if (!inPriv || evUser !== lastPrivUser) sessions++; inPriv = true; lastPrivUser = evUser; }
+    if (isPriv) {
+      if (!inPriv || evUser !== lastPrivUser || tipoE !== lastTipo) {
+        sessions++;
+        if (tipoE === 'premium') premSesiones++; else regSesiones++;
+      }
+      inPriv = true; lastPrivUser = evUser; lastTipo = tipoE;
+    }
     else if (isTip && inPriv && evUser === lastPrivUser) {}
     else if (esEspia) {}
-    else { inPriv = false; lastPrivUser = null; }
+    else { inPriv = false; lastPrivUser = null; lastTipo = null; }
   }
   if (sessions === 0 && privadoTokens > 0) sessions = 1;
+  // Si solo hubo de un tipo y no se contó ninguna sesión, asegúrate de 1
+  if (premSesiones === 0 && privPorTipo.premium.tokens > 0) premSesiones = 1;
+  if (regSesiones === 0 && privPorTipo.regular.tokens > 0) regSesiones = 1;
 
   const topTippers = Object.entries(tippers).sort((a,b)=>b[1]-a[1]).slice(0,10);
+
+  // Desglose de privados por tipo, listo para el render
+  const privadoDesglose = {
+    premium: { tokens: privPorTipo.premium.tokens, minutos: premMin, sesiones: premSesiones },
+    regular: { tokens: privPorTipo.regular.tokens, minutos: regMin, sesiones: regSesiones }
+  };
 
   return {
     balanceInicial: balanceInicialAjustado, balanceInicialAjustado, balanceFinal, tokensGanados,
     cats, topTippers, privadoTokens, privadoMinutos: privMinutos, privadoSesiones: sessions,
-    privadoTipsExtra, spyTokens, spyCount, totalEntries: positiveEntries.length
+    privadoTipsExtra, spyTokens, spyCount, totalEntries: positiveEntries.length,
+    privadoDesglose
   };
 }
 
@@ -9217,9 +9310,29 @@ function anzRenderCB(r) {
     .map(([cat,tk]) => `<tr><td class="anz-user">${cat}</td><td class="anz-num">${tk.toLocaleString('es')} tk</td><td class="anz-num">${Math.round(tk/cbCatTotal*100)}%</td></tr>`)
     .join('');
 
-  // Detect private type from rate: 60 tk/min = exclusivo, 30 tk/min = regular
-  const cbPrivRate = r.privadoMinutos > 0 ? Math.round(r.privadoTokens / r.privadoMinutos) : 0;
-  const cbPrivTipo = `${cbPrivRate} tk/min aprox.`;
+  // Desglose por tipo (premium privado vs privado regular)
+  const dg = r.privadoDesglose || { premium:{tokens:0,minutos:0,sesiones:0}, regular:{tokens:0,minutos:0,sesiones:0} };
+  const hayPrem = dg.premium.tokens > 0 || dg.premium.minutos > 0;
+  const hayReg  = dg.regular.tokens > 0 || dg.regular.minutos > 0;
+  const premRate = dg.premium.minutos > 0 ? Math.round(dg.premium.tokens / dg.premium.minutos) : 0;
+  const regRate  = dg.regular.minutos > 0 ? Math.round(dg.regular.tokens / dg.regular.minutos) : 0;
+
+  // "Tipo detectado": nombra la(s) modalidad(es) realmente encontrada(s)
+  let cbPrivTipo;
+  if (hayPrem && hayReg)      cbPrivTipo = 'Show premium privado + Show privado';
+  else if (hayPrem)          cbPrivTipo = 'Show premium privado';
+  else if (hayReg)           cbPrivTipo = 'Show privado';
+  else                       cbPrivTipo = '—';
+
+  // Filas de desglose por tipo (tokens + duración de cada uno)
+  const fmtHora = m => `${Math.floor(m/60)}h ${m%60}min`;
+  const tipoFila = (nombre, d, rate, col) => `
+    <div class="anz-priv-item" style="grid-column:1/-1;border-top:1px solid rgba(255,255,255,.06);padding-top:8px;margin-top:2px;">
+      <div class="anz-priv-label" style="color:${col};font-weight:600;">${nombre}</div>
+      <div class="anz-priv-val" style="font-size:12px;font-weight:400;color:var(--text2);">
+        ${d.tokens.toLocaleString('es')} tk · ${d.minutos} min (${fmtHora(d.minutos)}) · ${d.sesiones} sesión(es)${rate>0?` · ${rate} tk/min`:''}
+      </div>
+    </div>`;
 
   // Private detail
   const privDetail = r.privadoMinutos > 0 ? `
@@ -9232,6 +9345,8 @@ function anzRenderCB(r) {
         <div class="anz-priv-item"><div class="anz-priv-label">Sesiones</div><div class="anz-priv-val">${r.privadoSesiones}</div></div>
         <div class="anz-priv-item"><div class="anz-priv-label">Tipo detectado</div><div class="anz-priv-val" style="color:var(--gold2)">${cbPrivTipo}</div></div>
         ${r.privadoTipsExtra > 0 ? `<div class="anz-priv-item"><div class="anz-priv-label">Propinas en privado</div><div class="anz-priv-val" style="color:var(--rose)">+${r.privadoTipsExtra.toLocaleString('es')} tk</div></div>` : ''}
+        ${hayPrem ? tipoFila('Show premium privado', dg.premium, premRate, 'var(--gold2)') : ''}
+        ${hayReg ? tipoFila('Show privado', dg.regular, regRate, 'var(--cb)') : ''}
       </div>
       ${r.privadoTipsExtra > 0 ? '<div style="font-size:10px;color:var(--text3);margin-top:8px;">Nota: las propinas dadas durante el privado se cuentan aparte del tiempo.</div>' : ''}
     </div>` : '';
