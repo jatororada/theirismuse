@@ -9482,17 +9482,18 @@ function anzRenderCB(r) {
   else if (hayReg)           cbPrivTipo = 'Show privado';
   else                       cbPrivTipo = '—';
 
-  // Filas de desglose por tipo (tokens + duración de cada uno)
-  const fmtHora = m => `${Math.floor(m/60)}h ${m%60}min`;
-  const tipoFila = (nombre, d, rate, col) => `
-    <div class="anz-priv-item" style="grid-column:1/-1;border-top:1px solid rgba(255,255,255,.06);padding-top:8px;margin-top:2px;">
-      <div class="anz-priv-label" style="color:${col};font-weight:600;">${nombre}</div>
-      <div class="anz-priv-val" style="font-size:12px;font-weight:400;color:var(--text2);">
-        ${d.tokens.toLocaleString('es')} tk · ${d.minutos} min (${fmtHora(d.minutos)}) · ${d.sesiones} sesión(es)${rate>0?` · ${rate} tk/min`:''}
-      </div>
-    </div>`;
+  // Desglose por tipo con el MISMO formato de tabla que SC (Tipo|Tokens|Mins|Hora|Tarifa)
+  const cbBreakdown = [];
+  if (hayPrem) cbBreakdown.push({ tipo:'Show premium privado', tokens:dg.premium.tokens, mins:dg.premium.minutos, rate:premRate });
+  if (hayReg)  cbBreakdown.push({ tipo:'Show privado',        tokens:dg.regular.tokens, mins:dg.regular.minutos, rate:regRate });
 
-  // Private detail
+  // "Propinas en privado" = propinas durante el privado + tokens de espías.
+  // (Los espías pagan por ver el privado; es ingreso extra del mismo privado.)
+  const cbTipsPriv  = r.privadoTipsExtra || 0;
+  const cbSpy       = r.spyTokens || 0;
+  const cbTipsTotal = cbTipsPriv + cbSpy;
+
+  // Private detail — mismo diseño visual que el de SC
   const privDetail = r.privadoMinutos > 0 ? `
     <div class="anz-section">
       <div class="anz-section-title">Detalle privados CB</div>
@@ -9502,11 +9503,21 @@ function anzRenderCB(r) {
         <div class="anz-priv-item"><div class="anz-priv-label">En formato hora</div><div class="anz-priv-val" style="color:var(--gold)">${Math.floor(r.privadoMinutos/60)}h ${r.privadoMinutos%60}min</div></div>
         <div class="anz-priv-item"><div class="anz-priv-label">Sesiones</div><div class="anz-priv-val">${r.privadoSesiones}</div></div>
         <div class="anz-priv-item"><div class="anz-priv-label">Tipo detectado</div><div class="anz-priv-val" style="color:var(--gold2)">${cbPrivTipo}</div></div>
-        ${r.privadoTipsExtra > 0 ? `<div class="anz-priv-item"><div class="anz-priv-label">Propinas en privado</div><div class="anz-priv-val" style="color:var(--rose)">+${r.privadoTipsExtra.toLocaleString('es')} tk</div></div>` : ''}
-        ${hayPrem ? tipoFila('Show premium privado', dg.premium, premRate, 'var(--gold2)') : ''}
-        ${hayReg ? tipoFila('Show privado', dg.regular, regRate, 'var(--cb)') : ''}
+        ${cbTipsTotal > 0 ? `<div class="anz-priv-item"><div class="anz-priv-label">Propinas en privado</div><div class="anz-priv-val" style="color:var(--rose)">+${cbTipsTotal.toLocaleString('es')} tk</div></div>` : ''}
       </div>
-      ${r.privadoTipsExtra > 0 ? '<div style="font-size:10px;color:var(--text3);margin-top:8px;">Nota: las propinas dadas durante el privado se cuentan aparte del tiempo.</div>' : ''}
+      ${cbBreakdown.length > 1 ? `
+      <table class="anz-table" style="margin-top:10px;"><thead><tr>
+        <th>Tipo</th><th style="text-align:right">Tokens</th><th style="text-align:right">Mins</th><th style="text-align:right">Hora</th><th style="text-align:right">Tarifa</th>
+      </tr></thead><tbody>
+      ${cbBreakdown.map(p => `<tr>
+        <td class="anz-user">${p.tipo}</td>
+        <td class="anz-num">${p.tokens.toLocaleString('es')} tk</td>
+        <td class="anz-num">${p.mins} min</td>
+        <td class="anz-num" style="color:var(--gold)">${Math.floor(p.mins/60)}h ${p.mins%60}min</td>
+        <td class="anz-num" style="color:var(--text3)">${p.rate} tk/min</td>
+      </tr>`).join('')}
+      </tbody></table>` : ''}
+      ${cbTipsTotal > 0 ? `<div style="font-size:10px;color:var(--text3);margin-top:8px;">Propinas en privado = propinas durante el show privado${cbSpy > 0 ? ` (${cbTipsPriv.toLocaleString('es')} tk) + espías (${cbSpy.toLocaleString('es')} tk)` : ''}. Se cuentan aparte del tiempo.</div>` : ''}
     </div>` : '';
 
   // Top tippers
